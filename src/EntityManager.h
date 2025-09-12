@@ -13,7 +13,7 @@ class EntityManager {
 public:
     EntityManager();
     ~EntityManager();
-    void Update(sf::RenderWindow&);
+    void Update(sf::RenderWindow&, Profiler&);
     void AddEntity(Entity*);
     std::vector<Entity*> entities;
 };

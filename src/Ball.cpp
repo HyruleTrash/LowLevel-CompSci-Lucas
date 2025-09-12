@@ -16,8 +16,9 @@ Ball::Ball() : shape(radius) {
 Ball::~Ball() {
 }
 
-void Ball::Update(sf::RenderWindow& window) {
-    Entity::Update(window);
+void Ball::Update(sf::RenderWindow& window, Profiler& profiler) {
+    PROFILE(profiler, "Ball Update");
+    Entity::Update(window, profiler);
     shape.setPosition(position);
     window.draw(shape);
 

@@ -4,13 +4,14 @@
 
 #ifndef LOW_LEVEL_SETUP_ENTITY_H
 #define LOW_LEVEL_SETUP_ENTITY_H
+#include "Profiler.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 
 class Entity {
 public:
     Entity() = default;
     ~Entity() = default;
-    virtual void Update(sf::RenderWindow&) {};
+    virtual void Update(sf::RenderWindow&, Profiler&) {};
 public:
     sf::Vector2<float> position;
 };

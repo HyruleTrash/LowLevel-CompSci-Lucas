@@ -1,5 +1,6 @@
 add_executable(low-level_setup
         main.cpp
+        Profiler.hpp
         Ball.cpp
         Ball.h
         Entity.h

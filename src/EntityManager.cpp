@@ -14,9 +14,10 @@ EntityManager::~EntityManager() {
     }
 }
 
-void EntityManager::Update(sf::RenderWindow& window) {
+void EntityManager::Update(sf::RenderWindow& window, Profiler& profiler) {
+    PROFILE(profiler, "EntityManager Update");
     for (auto ent : entities) {
-        ent->Update(window);
+        ent->Update(window, profiler);
     }
 }
 

@@ -8,6 +8,7 @@
 
 #include "Ball.h"
 #include "EntityManager.h"
+#include "Profiler.hpp"
 
 int main() {
     sf::RenderWindow window;
@@ -20,19 +21,24 @@ int main() {
 
     sf::Clock deltaClock;
 
+    Profiler profiler;
+
     auto entityManager = EntityManager();
     entityManager.AddEntity(new Ball());
 
     while (window.isOpen())
     {
+        PROFILE(profiler, "Frame Update");
         // Event Polling
         while (const std::optional event = window.pollEvent())
         {
             ImGui::SFML::ProcessEvent(window, *event);
 
             // "close requested" event: we close the window
-            if (event->is<sf::Event::Closed>())
+            if (event->is<sf::Event::Closed>()) {
+                profiler.clear();
                 window.close();
+            }
         }
 
         // Update
@@ -41,7 +47,8 @@ int main() {
 
         // Render
         window.clear();
-        entityManager.Update(window);
+        entityManager.Update(window, profiler);
+        profiler.renderImGui();
 
         ImGui::SFML::Render(window);
 

@@ -12,7 +12,7 @@ class Ball : public Entity {
 public:
     Ball();
     ~Ball();
-    void Update(sf::RenderWindow&) override;
+    void Update(sf::RenderWindow&, Profiler&) override;
 public:
     sf::Color color = sf::Color::Green;
     float radius = 10;
