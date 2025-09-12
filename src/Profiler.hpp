@@ -1,4 +1,6 @@
-#pragma once
+
+#ifndef LOW_LEVEL_SETUP_PROFILER_H
+#define LOW_LEVEL_SETUP_PROFILER_H
 
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
@@ -68,7 +70,9 @@ public:
 
     void renderImGui() {
         ImGui::Begin("Performance Profiler");
-        ImGui::SetWindowCollapsed(true);
+        if (!std::filesystem::exists("imgui.ini")) {
+            ImGui::SetWindowCollapsed(true);
+        }
         ImGui::SetWindowPos({0,0});
 
         float total_frame_time = 0.0f;
@@ -184,3 +188,5 @@ public:
 
     size_t getParticleCount() const { return particles.size(); }
 };
+
+#endif //LOW_LEVEL_SETUP_PROFILER_H

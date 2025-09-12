@@ -8,6 +8,8 @@
 #include <SFML/Graphics/CircleShape.hpp>
 #include <SFML/Graphics/Color.hpp>
 
+#include "RigidBody.h"
+
 class Ball : public Entity {
 public:
     Ball();
@@ -19,6 +21,7 @@ public:
     float radius = 40;
 private:
     sf::CircleShape shape;
+    RigidBody body;
 };
 
 

@@ -5,7 +5,9 @@
 #ifndef LOW_LEVEL_SETUP_ENTITY_H
 #define LOW_LEVEL_SETUP_ENTITY_H
 #include "Profiler.hpp"
-#include "SFML/Graphics/RenderWindow.hpp"
+#include <vector>
+
+class Component;
 
 class Entity {
 public:
@@ -13,9 +15,10 @@ public:
     ~Entity() = default;
     virtual void Start(sf::RenderWindow&, Profiler&) {};
     virtual void Render(sf::RenderWindow&, Profiler&) {};
-    virtual void Update(sf::RenderWindow&, Profiler&) {};
+    virtual void Update(sf::RenderWindow&, Profiler&);
 public:
     sf::Vector2<float> position;
+    std::vector<Component*> components;
 };
 
 

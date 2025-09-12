@@ -11,6 +11,8 @@ Ball::Ball() : shape(radius) {
     position = sf::Vector2f(20, 20); // temp
     shape.setFillColor(color);
     shape.setPosition(position);
+    body = RigidBody();
+    components.push_back(&body);
 }
 
 Ball::~Ball() {

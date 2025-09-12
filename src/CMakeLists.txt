@@ -6,6 +6,11 @@ add_executable(low-level_setup
         Entity.h
         EntityManager.cpp
         EntityManager.h
+        Component.cpp
+        Component.h
+        Entity.cpp
+        RigidBody.cpp
+        RigidBody.h
 )
 
 target_link_libraries(low-level_setup
