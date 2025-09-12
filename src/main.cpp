@@ -48,7 +48,10 @@ int main() {
         // Render
         window.clear();
         entityManager.Update(window, profiler);
+
+        #ifndef NDEBUG
         profiler.renderImGui();
+        #endif
 
         ImGui::SFML::Render(window);
 

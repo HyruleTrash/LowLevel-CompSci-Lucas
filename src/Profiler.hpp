@@ -11,7 +11,11 @@
 #include <random>
 
 // Macro for easy profiling
-#define PROFILE(profiler, name) Profiler::ScopedTimer timer(profiler, name)
+#ifdef NDEBUG
+    #define PROFILE(profiler, name) ((void)0)
+#else
+    #define PROFILE(profiler, name) Profiler::ScopedTimer timer(profiler, name)
+#endif
 
 class Profiler {
 private:
