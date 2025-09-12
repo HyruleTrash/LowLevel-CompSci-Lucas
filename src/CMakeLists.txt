@@ -1,5 +1,10 @@
 add_executable(low-level_setup
- main.cpp
+        main.cpp
+        Ball.cpp
+        Ball.h
+        Entity.h
+        EntityManager.cpp
+        EntityManager.h
 )
 
 target_link_libraries(low-level_setup
