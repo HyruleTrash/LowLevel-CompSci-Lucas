@@ -4,8 +4,11 @@
 
 #include "EntityManager.h"
 
-EntityManager::EntityManager() {
+EntityManager::EntityManager(sf::RenderWindow& window, Profiler& profiler) {
     entities = {};
+    this->window = &window;
+    this->profiler = &profiler;
+
 }
 
 EntityManager::~EntityManager() {
@@ -14,13 +17,15 @@ EntityManager::~EntityManager() {
     }
 }
 
-void EntityManager::Update(sf::RenderWindow& window, Profiler& profiler) {
-    PROFILE(profiler, "EntityManager Update");
+void EntityManager::Update() {
+    PROFILE(*profiler, "EntityManager Update");
     for (auto ent : entities) {
-        ent->Update(window, profiler);
+        ent->Render(*window, *profiler);
+        ent->Update(*window, *profiler);
     }
 }
 
 void EntityManager::AddEntity(Entity* entity) {
     entities.push_back(entity);
+    entity->Start(*window, *profiler);
 }

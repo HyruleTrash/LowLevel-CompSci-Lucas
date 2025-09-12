@@ -11,6 +11,8 @@ class Entity {
 public:
     Entity() = default;
     ~Entity() = default;
+    virtual void Start(sf::RenderWindow&, Profiler&) {};
+    virtual void Render(sf::RenderWindow&, Profiler&) {};
     virtual void Update(sf::RenderWindow&, Profiler&) {};
 public:
     sf::Vector2<float> position;

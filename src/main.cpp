@@ -12,7 +12,7 @@
 
 int main() {
     sf::RenderWindow window;
-    window.create(sf::VideoMode({ 1280, 720 }), "My test window");
+    window.create(sf::VideoMode::getDesktopMode(), "My test window", sf::Style::Close);
     window.setFramerateLimit(60);
     window.setVerticalSyncEnabled(true);
 
@@ -20,10 +20,9 @@ int main() {
         return -1;
 
     sf::Clock deltaClock;
-
     Profiler profiler;
 
-    auto entityManager = EntityManager();
+    auto entityManager = EntityManager(window, profiler);
     entityManager.AddEntity(new Ball());
 
     while (window.isOpen())
@@ -47,7 +46,7 @@ int main() {
 
         // Render
         window.clear();
-        entityManager.Update(window, profiler);
+        entityManager.Update();
 
         #ifndef NDEBUG
         profiler.renderImGui();

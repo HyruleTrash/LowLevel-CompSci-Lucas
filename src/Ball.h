@@ -12,10 +12,11 @@ class Ball : public Entity {
 public:
     Ball();
     ~Ball();
+    void Render(sf::RenderWindow&, Profiler&) override;
     void Update(sf::RenderWindow&, Profiler&) override;
 public:
     sf::Color color = sf::Color::Green;
-    float radius = 10;
+    float radius = 40;
 private:
     sf::CircleShape shape;
 };

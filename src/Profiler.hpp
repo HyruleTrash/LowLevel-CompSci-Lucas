@@ -68,6 +68,8 @@ public:
 
     void renderImGui() {
         ImGui::Begin("Performance Profiler");
+        ImGui::SetWindowCollapsed(true);
+        ImGui::SetWindowPos({0,0});
 
         float total_frame_time = 0.0f;
         for (const auto& profile : profiles) {

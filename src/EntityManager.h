@@ -11,11 +11,14 @@
 
 class EntityManager {
 public:
-    EntityManager();
+    EntityManager(sf::RenderWindow&, Profiler&);
     ~EntityManager();
-    void Update(sf::RenderWindow&, Profiler&);
+    void Update();
     void AddEntity(Entity*);
     std::vector<Entity*> entities;
+private:
+    sf::RenderWindow* window;
+    Profiler* profiler;
 };
 
 
