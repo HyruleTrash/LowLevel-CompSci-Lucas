@@ -11,6 +11,8 @@ add_executable(low-level_setup
         Entity.cpp
         RigidBody.cpp
         RigidBody.h
+        Config.cpp
+        Config.h
 )
 
 target_link_libraries(low-level_setup

@@ -14,8 +14,9 @@ public:
     Entity() = default;
     ~Entity() = default;
     virtual void Start(sf::RenderWindow&, Profiler&) {};
-    virtual void Render(sf::RenderWindow&, Profiler&) {};
-    virtual void Update(sf::RenderWindow&, Profiler&);
+    virtual void Render(sf::RenderWindow&, Profiler&, sf::Time& deltaTime) {};
+    virtual void Update(sf::RenderWindow&, Profiler&, sf::Time& deltaTime);
+    void AddComponent(Component*);
 public:
     sf::Vector2<float> position;
     std::vector<Component*> components;

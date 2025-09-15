@@ -13,7 +13,7 @@ class EntityManager {
 public:
     EntityManager(sf::RenderWindow&, Profiler&);
     ~EntityManager();
-    void Update();
+    void Update(sf::Time& deltaTime);
     void AddEntity(Entity*);
     std::vector<Entity*> entities;
 private:

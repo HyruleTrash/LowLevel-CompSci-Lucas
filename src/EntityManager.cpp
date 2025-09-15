@@ -17,11 +17,11 @@ EntityManager::~EntityManager() {
     }
 }
 
-void EntityManager::Update() {
+void EntityManager::Update(sf::Time& deltaTime) {
     PROFILE(*profiler, "EntityManager Update");
     for (auto ent : entities) {
-        ent->Render(*window, *profiler);
-        ent->Update(*window, *profiler);
+        ent->Render(*window, *profiler, deltaTime);
+        ent->Update(*window, *profiler, deltaTime);
     }
 }
 

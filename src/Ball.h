@@ -13,9 +13,9 @@
 class Ball : public Entity {
 public:
     Ball();
-    ~Ball();
-    void Render(sf::RenderWindow&, Profiler&) override;
-    void Update(sf::RenderWindow&, Profiler&) override;
+    ~Ball()= default;
+    void Render(sf::RenderWindow&, Profiler&, sf::Time& deltaTime) override;
+    void Update(sf::RenderWindow&, Profiler&, sf::Time& deltaTime) override;
 public:
     sf::Color color = sf::Color::Green;
     float radius = 40;

@@ -6,9 +6,14 @@
 
 #include "Component.h"
 
-void Entity::Update(sf::RenderWindow &window, Profiler &profiler) {
+void Entity::Update(sf::RenderWindow &window, Profiler &profiler, sf::Time& deltaTime) {
     for (const auto component : components) {
         if (component->enabled)
-            component->Update(window, profiler);
+            component->Update(window, profiler, deltaTime);
     }
+}
+
+void Entity::AddComponent(Component* component) {
+    component->parent = this;
+    components.push_back(component);
 }

@@ -41,12 +41,13 @@ int main() {
         }
 
         // Update
-        ImGui::SFML::Update(window, deltaClock.restart());
+        sf::Time deltaTime = deltaClock.restart();
+        ImGui::SFML::Update(window, deltaTime);
         // ImGui::ShowDemoWindow();
 
         // Render
         window.clear();
-        entityManager.Update();
+        entityManager.Update(deltaTime);
 
         #ifndef NDEBUG
         profiler.renderImGui();

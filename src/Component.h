@@ -11,9 +11,9 @@
 
 class Component {
 public:
-    void Update(sf::RenderWindow&, Profiler&) {};
+    virtual void Update(sf::RenderWindow&, Profiler&, sf::Time& deltaTime) {};
 public:
-    Entity parent;
+    Entity* parent;
     bool enabled = true;
 };
 
