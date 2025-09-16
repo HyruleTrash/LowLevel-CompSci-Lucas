@@ -8,6 +8,7 @@
 #include <SFML/Graphics/CircleShape.hpp>
 #include <SFML/Graphics/Color.hpp>
 
+#include "OffScreenTeleporter.h"
 #include "RigidBody.h"
 
 class Ball : public Entity {
@@ -22,6 +23,7 @@ public:
 private:
     sf::CircleShape shape;
     RigidBody body;
+    OffScreenTeleporter teleporter;
 };
 
 

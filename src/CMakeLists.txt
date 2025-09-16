@@ -13,6 +13,8 @@ add_executable(low-level_setup
         RigidBody.h
         Config.cpp
         Config.h
+        OffScreenTeleporter.cpp
+        OffScreenTeleporter.h
 )
 
 target_link_libraries(low-level_setup

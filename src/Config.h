@@ -14,6 +14,10 @@ namespace Vector2 {
     constexpr auto RIGHT = sf::Vector2f(1, 0);
 }
 
+namespace Physics {
+    constexpr float AIR_DRAG{1.0};
+}
+
 class Config {
 };
 

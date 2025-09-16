@@ -23,7 +23,7 @@ void RigidBody::ApplyImpulse(const sf::Vector2f& impulse) {
 void RigidBody::Update(sf::RenderWindow& render_window, Profiler& profiler, sf::Time& deltaTime) {
     Component::Update(render_window, profiler, deltaTime);
     PROFILE(profiler, "RigidBody Update");
-    momentum += force * deltaTime.asSeconds();
+    momentum = force * deltaTime.asSeconds();
     velocity = momentum / mass;
     parent->position += velocity * deltaTime.asSeconds();
 }
