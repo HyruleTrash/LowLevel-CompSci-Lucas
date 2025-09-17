@@ -1,81 +1,72 @@
+#include <algorithm>
 #include <iostream>
+#include <vector>
 
-#include "imgui.h"
-#include "imgui-SFML.h"
-#include <bitset>
-#include <SFML/Graphics.hpp>
+
+void printStringVector(std::string name, std::vector<std::string>& vectorArray)
+{
+    std::cout << name << std::endl;
+    for (const auto& colour : vectorArray)
+        std::cout << colour << std::endl;
+    std::cout << std::endl;
+}
 
 int main() {
-    sf::RenderWindow window;
-    window.create(sf::VideoMode({ 1280, 720 }), "My test window");
-    window.setFramerateLimit(60);
-    window.setVerticalSyncEnabled(true);
+    // gebruik functies uit <algorithm> en <functional> om de volgende opdrachten uit te voeren:
 
-    if (!ImGui::SFML::Init(window))
-        return -1;
-
-    sf::Clock deltaClock;
-
-    // int number = 0x12345678;
-    // unsigned char* bytes = (unsigned char*)&number;
-    // for (int i = 0; i < 4; i++) {
-    //     std::cout << std::hex << (int)bytes[i] << " ";
-    // }
-    // std::cout << std::endl;
-
-    // struct BadEntity {
-    //     bool active;
-    //     double precise_x;
-    //     bool visible;
-    //     double precise_y;
-    //     int health;
-    //     bool can_move;
-    // };
-    //
-    // std::cout << sizeof(BadEntity) << std::endl;
-    //
-    // struct GoodEntity {
-    //     double precise_x; // 8
-    //     double precise_y; // 8
-    //     int health; // 4
-    //     bool active; // 1
-    //     bool visible; // 1
-    //     bool can_move; // 1
-    // };
-    //
-    // std::cout << sizeof(GoodEntity) << std::endl;
-
-    // unsigned int temp = 3329;
-    // std::cout << std::bitset<13>(temp) << std::endl;
-
-    bool walking = false;
-    bool running = false;
-
-    std::cout << (walking ^ running) << std::endl;
-
-    while (window.isOpen())
+    // splits de vector in 2 nieuwe vectoren:
+    // 1 met alles wat alfabetisch voor 'purple' komt,
+    // 1 met alles er na
     {
-        // Event Polling
-        while (const std::optional event = window.pollEvent())
-        {
-            ImGui::SFML::ProcessEvent(window, *event);
+        std::vector<std::string> colours{"red", "green", "white", "blue", "orange", "green", "orange", "black", "purple"};
 
-            // "close requested" event: we close the window
-            if (event->is<sf::Event::Closed>())
-                window.close();
-        }
+        // First sort based on alfabet
+        std::ranges::sort(colours);
 
-        // Update
-        ImGui::SFML::Update(window, deltaClock.restart());
-        ImGui::ShowDemoWindow();
+        // Get position of purple
+        auto purple = std::find(colours.begin(), colours.end(), "purple");
 
-        // Render
-        window.clear();
+        // Copy to the two Vectors
+        std::vector<std::string> firstVector{};
+        std::vector<std::string> secondVector{};
 
-        ImGui::SFML::Render(window);
+        std::copy(colours.begin(), purple, std::back_inserter(firstVector));
+        std::copy(purple, colours.end(), std::back_inserter(secondVector));
 
-        window.display();
+        // print for checking
+        printStringVector("First:", firstVector);
+        printStringVector("Second:", secondVector);
     }
 
-	return 0;
+    // maak alle elementen UPPERCASE
+    {
+        std::vector<std::string> colours{"red", "green", "white", "blue", "orange", "green", "orange", "black", "purple"};
+
+        for (const auto& colour : colours) {
+            const std::string firstChar(1, colour[0] & ~32);
+            colour.replace(colour.begin(), 1, firstChar);
+        }
+    }
+
+    // verwijder alle dubbele elementen
+    {
+        std::vector<std::string> colours{"red", "green", "white", "blue", "orange", "green", "orange", "black", "purple"};
+    }
+
+    // verwijder alle negatieve elementen
+    {
+        std::vector<double> numbers{10, 324422, 6, -23, 234.5, 654.1, 3.1242, -9.23, 635};
+    }
+
+    // bepaal voor alle elementen of ze even of oneven zijn
+    {
+        std::vector numbers{10, 324422, 6, -23, 234, 654, 3, -9, 635};
+    }
+
+    // bepaal de som, het gemiddelde, en het product van alle getallen te berekenen
+    {
+        std::vector<double> numbers{10, 324422.1, 6, -23, 234.5, 654.1, 3.1242, -9.23, 635};
+    }
+
+    return 0;
 }

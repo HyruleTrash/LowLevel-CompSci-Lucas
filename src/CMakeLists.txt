@@ -1,11 +1,7 @@
-add_executable(low-level_setup
- main.cpp
-)
+cmake_minimum_required(VERSION 3.6)
+project(OpdrAlgorithms)
 
-target_link_libraries(low-level_setup
- PUBLIC
-  ImGui-SFML::ImGui-SFML
-)
+set(CMAKE_CXX_STANDARD 20)
 
-# Do we need this?
-# include(Install.cmake)
+set(SOURCE_FILES main.cpp)
+add_executable(OpdrAlgorithms ${SOURCE_FILES})
