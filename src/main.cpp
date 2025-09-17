@@ -37,11 +37,9 @@ int main() {
     {
         std::vector<std::string> colours{"red", "green", "white", "blue", "orange", "green", "orange", "black", "purple"};
 
-        for (auto it = colours.begin(); it != colours.end(); ++it) {
-            auto colour = *it;
+        for (auto& colour : colours) {
             std::ranges::transform(colour, colour.begin(),
                 [](unsigned char c) { return c & ~32; });
-            *it = colour;
         }
 
         printVector("UPPERCASE:", colours);
