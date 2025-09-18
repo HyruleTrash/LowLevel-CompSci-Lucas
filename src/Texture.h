@@ -11,8 +11,10 @@ class Texture {
 public:
     Texture();
     Texture(const Texture&);
+    Texture(Texture&&) noexcept;
     ~Texture();
     Texture& operator=(Texture);
+    Texture& operator=(Texture&&) noexcept;
     friend std::ostream& operator<<(std::ostream& os, const Texture& texture);
 public:
     std::string name;

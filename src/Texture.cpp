@@ -20,6 +20,13 @@ Texture::Texture(const Texture& source) {
     std::copy_n(source.pixels, size, pixels);
 }
 
+Texture::Texture(Texture&& source) noexcept
+    : name(std::move(source.name))
+    , size(source.size)
+    , pixels(source.pixels) {
+    source.pixels = nullptr;
+}
+
 Texture::~Texture() {
     delete[] pixels;
 }
@@ -36,6 +43,17 @@ Texture& Texture::operator=(Texture other) {
     pixels = new int[size]();
     std::copy_n(other.pixels, size, pixels);
 
+    return *this;
+}
+
+Texture & Texture::operator=(Texture&& other) noexcept {
+    if (this != &other) {
+        delete pixels;
+        name = std::move(other.name);
+        size = other.size;
+        pixels = other.pixels;
+        other.pixels = nullptr;
+    }
     return *this;
 }
 
