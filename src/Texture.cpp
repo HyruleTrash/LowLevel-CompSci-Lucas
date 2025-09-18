@@ -5,31 +5,22 @@
 #include "Texture.h"
 
 #include <algorithm>
+#include <cmath>
 #include <ostream>
 
-Texture::Texture() {
-    name = "Texture";
-    size = 30 * 30;
-    pixels = new int[size]();
+Texture::Texture()  : name("Texture"), size(30, 30){
+    pixels.resize(size.x * size.y);
 }
 
-Texture::Texture(const Texture& source) {
-    name = source.name;
-    size = source.size;
-    pixels = new int[size]();
-    std::copy_n(source.pixels, size, pixels);
+Texture::Texture(const Texture& source) : name(source.name), size(source.size) {
+    pixels.resize(size.x * size.y);
+    std::copy(source.pixels.begin(), source.pixels.end(), pixels.begin());
 }
 
 Texture::Texture(Texture&& source) noexcept
     : name(std::move(source.name))
     , size(source.size)
-    , pixels(source.pixels) {
-    source.pixels = nullptr;
-}
-
-Texture::~Texture() {
-    delete[] pixels;
-}
+    , pixels(std::move(source.pixels)) {}
 
 Texture& Texture::operator=(Texture other) {
     if (this == &other)
@@ -38,36 +29,35 @@ Texture& Texture::operator=(Texture other) {
     name = other.name;
     size = other.size;
 
-    delete[] pixels;
-
-    pixels = new int[size]();
-    std::copy_n(other.pixels, size, pixels);
+    pixels.resize(size.x * size.y);
+    std::copy(other.pixels.begin(), other.pixels.end(), pixels.begin());
 
     return *this;
 }
 
 Texture & Texture::operator=(Texture&& other) noexcept {
     if (this != &other) {
-        delete pixels;
         name = std::move(other.name);
         size = other.size;
-        pixels = other.pixels;
-        other.pixels = nullptr;
+        pixels = std::move(other.pixels);
     }
     return *this;
 }
 
-std::ostream & operator<<(std::ostream &os, const Texture &texture) {
+std::ostream& operator<<(std::ostream& os, const Texture& texture) {
     os << texture.name << std::endl;
-    os << texture.size << std::endl;
+    os << texture.size.x << ", " << texture.size.y << std::endl;
+    os << "pixels:" << std::endl;
 
-    if (texture.pixels == NULL) {
-        os << "no pixels" << std::endl;
-    }else {
-        os << "pixels:" << std::endl;
-        for(int i = 0; i < texture.size; i++) {
-            os << texture.pixels[i] << std::endl;
+    for (size_t i = 0; i < texture.pixels.size(); ++i) {
+        bool pixel = texture.pixels[i];
+
+        if (i % texture.size.x == 0) {
+            os << std::endl;
         }
+        os << pixel << " ";
     }
-    return os << std::endl;
+    os << std::endl;
+
+    return os;
 }
