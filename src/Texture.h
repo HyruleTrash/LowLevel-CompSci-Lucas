@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "SFML/Graphics/RectangleShape.hpp"
+#include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/System/Vector2.hpp"
 
 
@@ -20,6 +22,7 @@ public:
     Texture& operator=(Texture);
     Texture& operator=(Texture&&) noexcept;
     friend std::ostream& operator<<(std::ostream& os, const Texture& texture);
+    void Render(sf::RenderWindow& window, sf::RectangleShape&) const;
 public:
     sf::Vector2<int> size;
     std::vector<bool> pixels{};

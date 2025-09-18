@@ -44,6 +44,26 @@ Texture & Texture::operator=(Texture&& other) noexcept {
     return *this;
 }
 
+void Texture::Render(sf::RenderWindow& window, sf::RectangleShape& templatePixel) const {
+    auto pixelSize = templatePixel.getSize();
+    int counter = 0;
+    for (size_t i = 0; i < pixels.size(); ++i) {
+        auto pixel = sf::RectangleShape(templatePixel);
+        if (pixels[i])
+            pixel.setFillColor(sf::Color::White);
+        else
+            pixel.setFillColor(sf::Color::Black);
+        int modX = i % size.x;
+        pixel.setPosition({modX * pixelSize.x, counter * pixelSize.y});
+
+        if (modX == 0) {
+            counter++;
+        }
+
+        window.draw(pixel);
+    }
+}
+
 std::ostream& operator<<(std::ostream& os, const Texture& texture) {
     os << texture.name << std::endl;
     os << texture.size.x << ", " << texture.size.y << std::endl;

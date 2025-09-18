@@ -18,9 +18,10 @@ int main() {
 
     sf::Clock deltaClock;
 
-    Texture texOne = Texture();
-    Texture texTwo = texOne;
-    std::cout << texTwo;
+    auto conwayTex = Texture();
+    auto windowSize = window.getSize();
+    sf::RectangleShape pixelTemplate;
+    pixelTemplate.setScale({static_cast<float>(windowSize.x / conwayTex.size.x), static_cast<float>(windowSize.y / conwayTex.size.y)});
 
     while (window.isOpen())
     {
@@ -34,9 +35,11 @@ int main() {
                 window.close();
         }
 
+        conwayTex.Render(window, pixelTemplate);
+
         // Update
         ImGui::SFML::Update(window, deltaClock.restart());
-        ImGui::ShowDemoWindow();
+        // ImGui::ShowDemoWindow();
 
         // Render
         window.clear();
