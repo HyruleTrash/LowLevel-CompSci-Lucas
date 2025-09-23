@@ -18,10 +18,14 @@ int main() {
 
     sf::Clock deltaClock;
 
-    auto conwayTex = Texture();
     auto windowSize = window.getSize();
+    sf::Vector2u texSize{30,30};
+
     sf::RectangleShape pixelTemplate;
-    pixelTemplate.setScale({static_cast<float>(windowSize.x / conwayTex.size.x), static_cast<float>(windowSize.y / conwayTex.size.y)});
+    pixelTemplate.setScale({static_cast<float>(windowSize.x / texSize.x), static_cast<float>(windowSize.y / texSize.y)});
+    auto pixelSize = pixelTemplate.getSize();
+
+    auto conwayTex = Texture(pixelTemplate, texSize, windowSize);
 
     while (window.isOpen())
     {
@@ -35,7 +39,7 @@ int main() {
                 window.close();
         }
 
-        conwayTex.Render(window, pixelTemplate);
+        conwayTex.Render(window, pixelSize);
 
         // Update
         ImGui::SFML::Update(window, deltaClock.restart());

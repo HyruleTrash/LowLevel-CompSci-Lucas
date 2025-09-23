@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "Pixel.h"
 #include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/System/Vector2.hpp"
@@ -15,17 +16,13 @@
 
 class Texture {
 public:
-    Texture();
-    Texture(const Texture&);
-    Texture(Texture&&) noexcept;
-    ~Texture() = default;
-    Texture& operator=(Texture);
-    Texture& operator=(Texture&&) noexcept;
+    Texture(const sf::RectangleShape&, sf::Vector2u, sf::Vector2u);
     friend std::ostream& operator<<(std::ostream& os, const Texture& texture);
-    void Render(sf::RenderWindow& window, sf::RectangleShape&) const;
+    void Render(sf::RenderWindow& window, sf::Vector2f&) const;
+
 public:
-    sf::Vector2<int> size;
-    std::vector<bool> pixels{};
+    sf::Vector2i size;
+    std::vector<Pixel*> pixels{};
     std::string name;
 };
 

@@ -6,61 +6,47 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <ostream>
 
-Texture::Texture()  : name("Texture"), size(30, 30){
+Texture::Texture(const sf::RectangleShape& pixelTemplate, sf::Vector2u texSize, sf::Vector2u windowSize)  : name("Texture"), size(texSize.x, texSize.y){
     pixels.resize(size.x * size.y);
-}
-
-Texture::Texture(const Texture& source) : name(source.name), size(source.size) {
-    pixels.resize(size.x * size.y);
-    std::copy(source.pixels.begin(), source.pixels.end(), pixels.begin());
-}
-
-Texture::Texture(Texture&& source) noexcept
-    : name(std::move(source.name))
-    , size(source.size)
-    , pixels(std::move(source.pixels)) {}
-
-Texture& Texture::operator=(Texture other) {
-    if (this == &other)
-        return *this;
-
-    name = other.name;
-    size = other.size;
-
-    pixels.resize(size.x * size.y);
-    std::copy(other.pixels.begin(), other.pixels.end(), pixels.begin());
-
-    return *this;
-}
-
-Texture & Texture::operator=(Texture&& other) noexcept {
-    if (this != &other) {
-        name = std::move(other.name);
-        size = other.size;
-        pixels = std::move(other.pixels);
-    }
-    return *this;
-}
-
-void Texture::Render(sf::RenderWindow& window, sf::RectangleShape& templatePixel) const {
-    auto pixelSize = templatePixel.getSize();
+    auto pixelSize = pixelTemplate.getSize();
     int counter = 0;
+
     for (size_t i = 0; i < pixels.size(); ++i) {
-        auto pixel = sf::RectangleShape(templatePixel);
-        if (pixels[i])
-            pixel.setFillColor(sf::Color::White);
-        else
-            pixel.setFillColor(sf::Color::Black);
+        const auto pixel = new Pixel();
+        pixel->render = std::make_unique<sf::RectangleShape>(pixelTemplate);
+        const auto pos = pixel->render->getPosition();
+
+        pixel->render->setFillColor(sf::Color(0, pos.x / windowSize.x, pos.y / windowSize.y));
+
         int modX = i % size.x;
-        pixel.setPosition({modX * pixelSize.x, counter * pixelSize.y});
+        pixel->render->setPosition({modX * pixelSize.x, counter * pixelSize.y});
 
         if (modX == 0) {
             counter++;
         }
+        pixels[i] = pixel;
+    }
+}
 
-        window.draw(pixel);
+void Texture::Render(sf::RenderWindow& window, sf::Vector2f& pixelSize) const {
+    // int counter = 0;
+    for (size_t i = 0; i < pixels.size(); ++i) {
+        const auto pixel = pixels[i];
+        // if (pixel->state)
+        //     pixel->render->setFillColor(sf::Color::White);
+        // else
+        //     pixel->render->setFillColor(sf::Color::Black);
+
+        // int modX = i % size.x;
+        //
+        // if (modX == 0) {
+        //     counter++;
+        // }
+
+        window.draw(*pixel->render);
     }
 }
 
