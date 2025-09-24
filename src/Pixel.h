@@ -10,14 +10,14 @@
 
 struct Pixel {
     bool state;
-    std::shared_ptr<Pixel> neighbour100; // topLeft
-    std::shared_ptr<Pixel> neighbour010; // topMiddle
-    std::shared_ptr<Pixel> neighbour001; // topRight
-    std::shared_ptr<Pixel> neighbour000; // Left
-    std::shared_ptr<Pixel> neighbour111; // Right
-    std::shared_ptr<Pixel> neighbour011; // BottomLeft
-    std::shared_ptr<Pixel> neighbour101; // BottomMiddle
-    std::shared_ptr<Pixel> neighbour110; // BottomRight
+    Pixel* neighbour100; // topLeft
+    Pixel* neighbour010; // topMiddle
+    Pixel* neighbour001; // topRight
+    Pixel* neighbour000; // Left
+    Pixel* neighbour111; // Right
+    Pixel* neighbour011; // BottomLeft
+    Pixel* neighbour101; // BottomMiddle
+    Pixel* neighbour110; // BottomRight
     std::unique_ptr<sf::RectangleShape> render;
 };
 

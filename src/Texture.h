@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "Pixel.h"
+#include "Profiler.hpp"
 #include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/System/Vector2.hpp"
@@ -16,14 +17,17 @@
 
 class Texture {
 public:
-    Texture(const sf::RectangleShape&, sf::Vector2u, sf::Vector2u);
+    Texture(const sf::RectangleShape&, const sf::Vector2u&, const sf::Vector2u&, Profiler&);
     friend std::ostream& operator<<(std::ostream& os, const Texture& texture);
+    void Update(sf::RenderWindow& window, sf::Vector2f&) const;
+    void CalculateNextState() const;
     void Render(sf::RenderWindow& window, sf::Vector2f&) const;
 
 public:
     sf::Vector2i size;
     std::vector<Pixel*> pixels{};
     std::string name;
+    Profiler* profiler;
 };
 
 

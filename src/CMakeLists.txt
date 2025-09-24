@@ -4,6 +4,7 @@ add_executable(low-level_setup
         Texture.h
         Pixel.cpp
         Pixel.h
+        Profiler.hpp
 )
 
 target_link_libraries(low-level_setup
