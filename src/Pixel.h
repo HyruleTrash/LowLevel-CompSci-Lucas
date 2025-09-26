@@ -9,16 +9,10 @@
 #include "SFML/Graphics/RectangleShape.hpp"
 
 struct Pixel {
-    bool state;
-    Pixel* neighbour100; // topLeft
-    Pixel* neighbour010; // topMiddle
-    Pixel* neighbour001; // topRight
-    Pixel* neighbour000; // Left
-    Pixel* neighbour111; // Right
-    Pixel* neighbour011; // BottomLeft
-    Pixel* neighbour101; // BottomMiddle
-    Pixel* neighbour110; // BottomRight
+    bool alive;
     std::unique_ptr<sf::RectangleShape> render;
+    int aliveNeighbourCount{0};
+    std::vector<Pixel*> neighbours;
 };
 
 

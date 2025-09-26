@@ -25,9 +25,10 @@ public:
 
 public:
     sf::Vector2i size;
-    std::vector<Pixel*> pixels{};
-    std::string name;
     Profiler* profiler;
+    std::string name;
+private:
+    mutable std::vector<Pixel*> pixels;
 };
 
 

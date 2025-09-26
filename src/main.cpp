@@ -10,8 +10,8 @@
 
 int main() {
     sf::RenderWindow window;
-    window.create(sf::VideoMode({ 720, 720 }), "Conway's game of life");
-    window.setFramerateLimit(60);
+    window.create(sf::VideoMode({ 900, 900 }), "Conway's game of life");
+    window.setFramerateLimit(60); // change later
     window.setVerticalSyncEnabled(true);
 
     if (!ImGui::SFML::Init(window))
@@ -21,7 +21,7 @@ int main() {
     Profiler profiler;
 
     const auto windowSize = window.getSize();
-    const sf::Vector2u texSize{30,30};
+    const sf::Vector2u texSize{300,300};
 
     sf::RectangleShape pixelTemplate;
     pixelTemplate.setSize({static_cast<float>(windowSize.x / texSize.x), static_cast<float>(windowSize.y / texSize.y)});
@@ -44,6 +44,13 @@ int main() {
                 profiler.clear();
                 window.close();
             }
+            else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+            {
+                if (keyPressed->scancode == sf::Keyboard::Scancode::Enter) {
+                    // conwayTex.CalculateNextState();
+                    std::cout << conwayTex << std::endl;
+                }
+            }
         }
 
         // Update
@@ -53,7 +60,9 @@ int main() {
         // Render
         window.clear();
 
+        // conwayTex.Render(window, pixelSize);
         conwayTex.Update(window, pixelSize);
+
         #ifndef NDEBUG
         profiler.renderImGui();
         #endif
