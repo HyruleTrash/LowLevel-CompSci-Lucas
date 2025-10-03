@@ -15,9 +15,11 @@
 Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& windowSize, Profiler& profiler) {
     this->profiler = &profiler;
 
-    // Set size of used collection classes
-    renders.resize(TEX_SIZE);
+
     neighboursLookup.resize(TEX_SIZE);
+    std::generate(neighboursLookup.begin(), neighboursLookup.end(), []{
+        return std::make_unique<PixelNeighbours>();
+    });
 
     auto getRandomBool = [](std::uint64_t seed, size_t i) {
         std::mt19937_64 rng(seed ^ (i * 0x9E3779B97F4AC15));
@@ -29,18 +31,18 @@ Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& wi
     constexpr auto color = sf::Color(0, 255, 255, 150);
 
     // Create and fill renders, as well as setting the random position and states
+    renders.resize(TEX_SIZE);
     for (size_t i = 0; i < TEX_SIZE; ++i) {
         renders[i] = std::make_unique<sf::RectangleShape>(pixelTemplate);
-        neighboursLookup[i] = std::make_unique<PixelNeighbours>();
 
-        const int modX = i % TEX_SIZE_X;
+        const int column = i % TEX_SIZE_X;
         const int row = i / TEX_SIZE_X;
 
-        const float x = static_cast<float>(modX) * pixelSize.x;
+        const float x = static_cast<float>(column) * pixelSize.x;
         const float y = static_cast<float>(row) * pixelSize.y;
         renders[i]->setPosition({x, y});
 
-        #ifndef NDEBUG
+        #ifndef NDEBUG // debug gradient for checking x, y positioning
         const std::uint8_t g = x / static_cast<float>(windowSize.x) * 255.0;
         const std::uint8_t b = y / static_cast<float>(windowSize.y) * 255.0;
         const auto colorDebug = sf::Color(0, g, b, 255);
@@ -49,16 +51,12 @@ Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& wi
 
         renders[i]->setFillColor(color);
 
+        // set cell state
         states[i] = getRandomBool(255, i);
-    }
 
-    // Setup neighbour lookup table
-    for (size_t i = 0; i < TEX_SIZE; ++i) {
-        const int modX = i % TEX_SIZE_X;
-        const int row = i / TEX_SIZE_X;
-
-        const bool canLeft = modX != 0;
-        const bool canRight = modX != TEX_SIZE_X - 1;
+        // set neighbour lookup table
+        const bool canLeft = column != 0;
+        const bool canRight = column != TEX_SIZE_X - 1;
         if (row != 0) { // canTop
             if (canLeft) {
                 neighboursLookup[i]->neighbours.push_back({-1,-1});
@@ -86,8 +84,6 @@ Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& wi
                 neighboursLookup[i]->aliveNeighbourCount++;
         });
     }
-
-    // std::cout << *this << std::endl;
 }
 
 void Texture::Update(sf::RenderWindow& window) const {
