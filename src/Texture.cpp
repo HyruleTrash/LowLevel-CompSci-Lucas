@@ -131,42 +131,41 @@ void Texture::Render(sf::RenderWindow& window) const {
 }
 
 std::ostream& operator<<(std::ostream& os, const Texture& texture) {
-    // os << texture.name << std::endl;
-    // os << texture.size.x << ", " << texture.size.y << std::endl;
-    // os << "pixels:" << std::endl;
-    //
-    // // std::stringstream afterPrint{};
-    // for (size_t i = 0; i < texture.pixels.size(); ++i) {
-    //     auto pixel = texture.pixels[i];
-    //
-    //     // if (i % texture.size.x == 0) {
-    //     //     os << std::endl;
-    //     // }
-    //     // os << pixel->alive << " ";
-    //
-    //     // afterPrint << std::endl << "Pixel:" << std::endl;
-    //     os << "state = " << pixel->alive << " " << pixel << std::endl;
-    //     os << "AliveNeighbourCount = " << pixel->aliveNeighbourCount << std::endl;
-    //     // afterPrint << "render = " << pixel->render.get() << std::endl;
-    //     // if (pixel->render != nullptr) {
-    //     //     afterPrint << "render [ " << std::endl;
-    //     //     auto color = pixel->render->getFillColor();
-    //     //     afterPrint << "color = " << color.r << ", " << color.g << ", " << color.b << std::endl;
-    //     //     auto pos = pixel->render->getPosition();
-    //     //     afterPrint << "position = " << pos.x << ", " << pos.y << std::endl;
-    //     //     auto size = pixel->render->getSize();
-    //     //     afterPrint << "size = " << size.x << ", " << size.y << std::endl;
-    //     //     afterPrint << "]" << std::endl;
-    //     // }
-    //     os << "neighbours [ " << std::endl;
-    //     std::for_each(pixel->neighbours.begin(), pixel->neighbours.end(), [&os](Pixel* neighbour) {
-    //         if (neighbour != nullptr)
-    //             os << "neighbour = " << neighbour->alive << " " << neighbour << std::endl;
-    //     });
-    //     os << "]" << std::endl;
-    //
-    // }
-    // // os << std::endl << afterPrint.str() << std::endl;
+    os << TEX_SIZE_X << ", " << TEX_SIZE_Y << std::endl;
+    os << "pixels:" << std::endl;
+
+    // std::stringstream afterPrint{};
+    for (size_t i = 0; i < TEX_SIZE; ++i) {
+        // if (i % texture.size.x == 0) {
+        //     os << std::endl;
+        // }
+        // os << pixel->alive << " ";
+
+        // afterPrint << std::endl << "Pixel:" << std::endl;
+        os << "state = " << texture.states[i] << " " << i << std::endl;
+        os << "AliveNeighbourCount = " << texture.neighboursLookup[i]->aliveNeighbourCount << std::endl;
+        // afterPrint << "render = " << pixel->render.get() << std::endl;
+        // if (pixel->render != nullptr) {
+        //     afterPrint << "render [ " << std::endl;
+        //     auto color = pixel->render->getFillColor();
+        //     afterPrint << "color = " << color.r << ", " << color.g << ", " << color.b << std::endl;
+        //     auto pos = pixel->render->getPosition();
+        //     afterPrint << "position = " << pos.x << ", " << pos.y << std::endl;
+        //     auto size = pixel->render->getSize();
+        //     afterPrint << "size = " << size.x << ", " << size.y << std::endl;
+        //     afterPrint << "]" << std::endl;
+        // }
+        os << "neighbours [ " << std::endl;
+        std::for_each(texture.neighboursLookup[i]->neighbours.begin(), texture.neighboursLookup[i]->neighbours.end(), [&i, &os, &texture](const auto& neighbourPosition) {
+            const auto [x, y] = neighbourPosition;
+            os << "[" << static_cast<int>(x) << ", " << static_cast<int>(y) << "] = ";
+            const auto neighbourId = static_cast<long>(i) + x + y * TEX_SIZE_X;
+            os << texture.states[neighbourId] << " " << neighbourId << std::endl;
+        });
+        os << "]" << std::endl;
+
+    }
+    // os << std::endl << afterPrint.str() << std::endl;
 
     return os;
 }

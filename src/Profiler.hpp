@@ -29,6 +29,7 @@ private:
     };
 
     std::vector<ProfileData> profiles;
+    long frameCount{0};
 
 public:
     class ScopedTimer {
@@ -80,8 +81,8 @@ public:
             total_frame_time += profile.duration_ms;
         }
 
-        ImGui::Text("Total Frame Time: %.3f ms (%.1f FPS)",
-            total_frame_time, 1000.0f / std::max(total_frame_time, 0.001f));
+        ImGui::Text("Total Frame Time: %.3f ms (%.1f FPS) - frame count: %d",
+            total_frame_time, 1000.0f / std::max(total_frame_time, 0.001f), frameCount);
 
         ImGui::Separator();
 
@@ -113,6 +114,7 @@ public:
         }
 
         ImGui::End();
+        frameCount++;
     }
 
     void clear() {

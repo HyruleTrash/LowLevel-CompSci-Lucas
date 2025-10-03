@@ -12,7 +12,7 @@
 int main() {
     sf::RenderWindow window;
     window.create(sf::VideoMode({ 900, 900 }), "Conway's game of life");
-    window.setFramerateLimit(60); // change later
+    window.setFramerateLimit(60);
     window.setVerticalSyncEnabled(true);
 
     if (!ImGui::SFML::Init(window))
@@ -46,7 +46,7 @@ int main() {
             // else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
             // {
             //     if (keyPressed->scancode == sf::Keyboard::Scancode::Enter) {
-            //         // conwayTex.CalculateNextState();
+            //         conwayTex.CalculateNextState();
             //         std::cout << conwayTex << std::endl;
             //     }
             // }
@@ -59,7 +59,7 @@ int main() {
         // Render
         window.clear();
 
-        // conwayTex.Render(window, pixelSize);
+        // conwayTex.Render(window);
         conwayTex.Update(window);
 
         #ifndef NDEBUG
