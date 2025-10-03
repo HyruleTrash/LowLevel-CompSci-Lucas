@@ -7,6 +7,7 @@
 
 #include "Profiler.hpp"
 #include "Texture.h"
+#include  "DefaultValues.h"
 
 int main() {
     sf::RenderWindow window;
@@ -21,13 +22,11 @@ int main() {
     Profiler profiler;
 
     const auto windowSize = window.getSize();
-    const sf::Vector2u texSize{300,300};
 
     sf::RectangleShape pixelTemplate;
-    pixelTemplate.setSize({static_cast<float>(windowSize.x / texSize.x), static_cast<float>(windowSize.y / texSize.y)});
-    auto pixelSize = pixelTemplate.getSize();
+    pixelTemplate.setSize({static_cast<float>(windowSize.x / TEX_SIZE_X), static_cast<float>(windowSize.y / TEX_SIZE_Y)});
 
-    const auto conwayTex = Texture(pixelTemplate, texSize, windowSize, profiler);
+    const auto conwayTex = Texture(pixelTemplate, windowSize, profiler);
     // std::cout << conwayTex << std::endl;
 
     while (window.isOpen())
@@ -44,13 +43,13 @@ int main() {
                 profiler.clear();
                 window.close();
             }
-            else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
-            {
-                if (keyPressed->scancode == sf::Keyboard::Scancode::Enter) {
-                    // conwayTex.CalculateNextState();
-                    std::cout << conwayTex << std::endl;
-                }
-            }
+            // else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+            // {
+            //     if (keyPressed->scancode == sf::Keyboard::Scancode::Enter) {
+            //         // conwayTex.CalculateNextState();
+            //         std::cout << conwayTex << std::endl;
+            //     }
+            // }
         }
 
         // Update
@@ -61,7 +60,7 @@ int main() {
         window.clear();
 
         // conwayTex.Render(window, pixelSize);
-        conwayTex.Update(window, pixelSize);
+        conwayTex.Update(window);
 
         #ifndef NDEBUG
         profiler.renderImGui();

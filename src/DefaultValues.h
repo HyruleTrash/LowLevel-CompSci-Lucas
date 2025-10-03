@@ -1,0 +1,12 @@
+﻿//
+// Created by Lucas on 03/10/2025.
+//
+
+#ifndef LOW_LEVEL_SETUP_DEFAULTVALUES_H
+#define LOW_LEVEL_SETUP_DEFAULTVALUES_H
+
+#define TEX_SIZE_X 200
+#define TEX_SIZE_Y 200
+#define TEX_SIZE TEX_SIZE_X * TEX_SIZE_Y
+
+#endif //LOW_LEVEL_SETUP_DEFAULTVALUES_H
