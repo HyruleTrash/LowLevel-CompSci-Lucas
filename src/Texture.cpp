@@ -103,10 +103,10 @@ void Texture::CalculateNextState() const {
 
         if (states[i] && (liveNeighbors < 2 || liveNeighbors > 3)) {
             // underpopulation or overpopulation
-            states.flip(i);
+            states[i] = false;
         }else if (liveNeighbors == 3) {
             // reproduction
-            states.flip(i);
+            states[i] = true;
         }
     }
 
