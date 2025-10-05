@@ -15,7 +15,10 @@
 Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& windowSize, Profiler& profiler) {
     this->profiler = &profiler;
 
-    neighboursLookup.resize(TEX_SIZE);
+    const auto size = TextureConstants::getSize();
+    const auto sizeX = TextureConstants::getXSize();
+
+    neighboursLookup.resize(size);
     std::generate(neighboursLookup.begin(), neighboursLookup.end(), []{
         return std::make_unique<PixelNeighbours>();
     });
@@ -30,12 +33,12 @@ Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& wi
     constexpr auto color = sf::Color(0, 255, 255, 150);
 
     // Create and fill renders, as well as setting the random position and states
-    renders.resize(TEX_SIZE);
-    for (size_t i = 0; i < TEX_SIZE; ++i) {
+    renders.resize(size);
+    for (size_t i = 0; i < size; ++i) {
         renders[i] = std::make_unique<sf::RectangleShape>(pixelTemplate);
 
-        const int column = i % TEX_SIZE_X;
-        const int row = i / TEX_SIZE_X;
+        const int column = i % sizeX;
+        const int row = i / sizeX;
 
         const float x = static_cast<float>(column) * pixelSize.x;
         const float y = static_cast<float>(row) * pixelSize.y;
@@ -55,18 +58,18 @@ Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& wi
 
         // set neighbour lookup table
         const bool canLeft = column != 0;
-        const bool canRight = column != TEX_SIZE_X - 1;
+        const bool canRight = column != sizeX - 1;
         if (row != 0) { // canTop
             if (canLeft) {
                 neighboursLookup[i]->neighbours.push_back({-1,-1});
-                neighboursLookup[i - TEX_SIZE_X - 1]->neighbours.push_back({1,1});
+                neighboursLookup[i - sizeX - 1]->neighbours.push_back({1,1});
             }
             if (canRight) {
                 neighboursLookup[i]->neighbours.push_back({1,-1});
-                neighboursLookup[i - TEX_SIZE_X + 1]->neighbours.push_back({-1,1});
+                neighboursLookup[i - sizeX + 1]->neighbours.push_back({-1,1});
             }
             neighboursLookup[i]->neighbours.push_back({0,-1});
-            neighboursLookup[i - TEX_SIZE_X]->neighbours.push_back({0,1});
+            neighboursLookup[i - sizeX]->neighbours.push_back({0,1});
         }
         if (canLeft) {
             neighboursLookup[i]->neighbours.push_back({-1,0});
@@ -75,10 +78,10 @@ Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& wi
     }
 
     // calculate neighbours
-    for (size_t i = 0; i < TEX_SIZE; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [&i, this](const auto& neighbourPosition) {
             const auto [x, y] = neighbourPosition;
-            const auto neighbourId = static_cast<long>(i) + x + y * TEX_SIZE_X;
+            const auto neighbourId = static_cast<long>(i) + x + y * sizeX;
             if (states[neighbourId])
                 neighboursLookup[i]->aliveNeighbourCount++;
         });
@@ -93,7 +96,10 @@ void Texture::Update(sf::RenderWindow& window) const {
 void Texture::CalculateNextState() const {
     usedAndUpdated.reset();
 
-    for (size_t i = 0; i < TEX_SIZE; ++i) {
+    const auto size = TextureConstants::getSize();
+    const auto sizeX = TextureConstants::getXSize();
+
+    for (size_t i = 0; i < size; ++i) {
         const int liveNeighbors = neighboursLookup[i]->aliveNeighbourCount;
 
         if (usedAndUpdated[i])
@@ -104,7 +110,7 @@ void Texture::CalculateNextState() const {
         }
         std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [&i, this](const auto& neighbourPosition) {
             const auto [x, y] = neighbourPosition;
-            const auto neighbourId = static_cast<long>(i) + x + y * TEX_SIZE_X;
+            const auto neighbourId = static_cast<long>(i) + x + y * sizeX;
             if (!usedAndUpdated[neighbourId]) {
                 if (states[neighbourId] && (neighboursLookup[neighbourId]->aliveNeighbourCount < 2 || neighboursLookup[neighbourId]->aliveNeighbourCount > 3)) {
                     usedAndUpdated[neighbourId] = true;
@@ -118,11 +124,11 @@ void Texture::CalculateNextState() const {
         });
     }
 
-    for (size_t i = 0; i < TEX_SIZE; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         neighboursLookup[i]->aliveNeighbourCount = 0;
         std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [&i, this](const auto& neighbourPosition) {
             const auto [x, y] = neighbourPosition;
-            const auto neighbourId = static_cast<long>(i) + x + y * TEX_SIZE_X;
+            const auto neighbourId = static_cast<long>(i) + x + y * sizeX;
             if (states[neighbourId])
                 neighboursLookup[i]->aliveNeighbourCount++;
         });
@@ -130,48 +136,29 @@ void Texture::CalculateNextState() const {
 }
 
 void Texture::Render(sf::RenderWindow& window) const {
-    for (size_t i = 0; i < TEX_SIZE; ++i){
+    for (size_t i = 0; i < TextureConstants::getSize(); ++i){
         if (states[i])
             window.draw(*renders[i]);
     }
 }
 
 std::ostream& operator<<(std::ostream& os, const Texture& texture) {
-    os << TEX_SIZE_X << ", " << TEX_SIZE_Y << std::endl;
+    os << TextureConstants::getXSize() << ", " << TextureConstants::getYSize() << std::endl;
     os << "pixels:" << std::endl;
 
-    // std::stringstream afterPrint{};
-    for (size_t i = 0; i < TEX_SIZE; ++i) {
-        // if (i % texture.size.x == 0) {
-        //     os << std::endl;
-        // }
-        // os << pixel->alive << " ";
-
-        // afterPrint << std::endl << "Pixel:" << std::endl;
+    for (size_t i = 0; i < TextureConstants::getSize(); ++i) {
         os << "state = " << texture.states[i] << " " << i << std::endl;
         os << "AliveNeighbourCount = " << texture.neighboursLookup[i]->aliveNeighbourCount << std::endl;
-        // afterPrint << "render = " << pixel->render.get() << std::endl;
-        // if (pixel->render != nullptr) {
-        //     afterPrint << "render [ " << std::endl;
-        //     auto color = pixel->render->getFillColor();
-        //     afterPrint << "color = " << color.r << ", " << color.g << ", " << color.b << std::endl;
-        //     auto pos = pixel->render->getPosition();
-        //     afterPrint << "position = " << pos.x << ", " << pos.y << std::endl;
-        //     auto size = pixel->render->getSize();
-        //     afterPrint << "size = " << size.x << ", " << size.y << std::endl;
-        //     afterPrint << "]" << std::endl;
-        // }
         os << "neighbours [ " << std::endl;
         std::for_each(texture.neighboursLookup[i]->neighbours.begin(), texture.neighboursLookup[i]->neighbours.end(), [&i, &os, &texture](const auto& neighbourPosition) {
             const auto [x, y] = neighbourPosition;
             os << "[" << static_cast<int>(x) << ", " << static_cast<int>(y) << "] = ";
-            const auto neighbourId = static_cast<long>(i) + x + y * TEX_SIZE_X;
+            const auto neighbourId = static_cast<long>(i) + x + y * TextureConstants::getXSize();
             os << texture.states[neighbourId] << " " << neighbourId << std::endl;
         });
         os << "]" << std::endl;
 
     }
-    // os << std::endl << afterPrint.str() << std::endl;
 
     return os;
 }

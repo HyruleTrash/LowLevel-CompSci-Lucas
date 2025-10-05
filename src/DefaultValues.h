@@ -5,8 +5,19 @@
 #ifndef LOW_LEVEL_SETUP_DEFAULTVALUES_H
 #define LOW_LEVEL_SETUP_DEFAULTVALUES_H
 
-#define TEX_SIZE_X 300
-#define TEX_SIZE_Y 300
-#define TEX_SIZE TEX_SIZE_X * TEX_SIZE_Y
+class TextureConstants {
+private:
+    // Private constructor to prevent instantiation
+    TextureConstants() = delete;
+    // Delete copy operations
+    TextureConstants(const TextureConstants&) = delete;
+    TextureConstants& operator=(const TextureConstants&) = delete;
+
+public:
+    // Static accessor for the constants
+    static constexpr int getXSize() { return 300; }
+    static constexpr int getYSize() { return 300; }
+    static constexpr int getSize() { return getXSize() * getYSize(); }
+};
 
 #endif //LOW_LEVEL_SETUP_DEFAULTVALUES_H

@@ -28,8 +28,8 @@ public:
 public:
     Profiler* profiler;
 private:
-    mutable std::bitset<TEX_SIZE> states;
-    mutable std::bitset<TEX_SIZE> usedAndUpdated;
+    mutable std::bitset<TextureConstants::getSize()> states;
+    mutable std::bitset<TextureConstants::getSize()> usedAndUpdated;
     std::vector<std::unique_ptr<sf::RectangleShape>> renders;
     std::vector<std::unique_ptr<PixelNeighbours>> neighboursLookup;
 };

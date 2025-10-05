@@ -24,7 +24,7 @@ int main() {
     const auto windowSize = window.getSize();
 
     sf::RectangleShape pixelTemplate;
-    pixelTemplate.setSize({static_cast<float>(windowSize.x / TEX_SIZE_X), static_cast<float>(windowSize.y / TEX_SIZE_Y)});
+    pixelTemplate.setSize({static_cast<float>(windowSize.x / TextureConstants::getXSize()), static_cast<float>(windowSize.y / TextureConstants::getYSize())});
 
     const auto conwayTex = Texture(pixelTemplate, windowSize, profiler);
     // std::cout << conwayTex << std::endl;
