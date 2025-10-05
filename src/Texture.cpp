@@ -15,7 +15,6 @@
 Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& windowSize, Profiler& profiler) {
     this->profiler = &profiler;
 
-
     neighboursLookup.resize(TEX_SIZE);
     std::generate(neighboursLookup.begin(), neighboursLookup.end(), []{
         return std::make_unique<PixelNeighbours>();
@@ -92,22 +91,34 @@ void Texture::Update(sf::RenderWindow& window) const {
 }
 
 void Texture::CalculateNextState() const {
-    PROFILE(*profiler, "calculate pixel");
+    usedAndUpdated.reset();
+
     for (size_t i = 0; i < TEX_SIZE; ++i) {
-        PROFILE(*profiler, "pixel state logic");
         const int liveNeighbors = neighboursLookup[i]->aliveNeighbourCount;
 
+        if (usedAndUpdated[i])
+            continue;
         if (states[i] && (liveNeighbors < 2 || liveNeighbors > 3)) {
             // underpopulation or overpopulation
             states[i] = false;
-        }else if (liveNeighbors == 3) {
-            // reproduction
-            states[i] = true;
         }
+        std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [&i, this](const auto& neighbourPosition) {
+            const auto [x, y] = neighbourPosition;
+            const auto neighbourId = static_cast<long>(i) + x + y * TEX_SIZE_X;
+            if (!usedAndUpdated[neighbourId]) {
+                if (states[neighbourId] && (neighboursLookup[neighbourId]->aliveNeighbourCount < 2 || neighboursLookup[neighbourId]->aliveNeighbourCount > 3)) {
+                    usedAndUpdated[neighbourId] = true;
+                    states[neighbourId] = false; // underpopulation or overpopulation
+                }
+                else if (!states[neighbourId] && neighboursLookup[neighbourId]->aliveNeighbourCount == 3){
+                    usedAndUpdated[neighbourId] = true;
+                    states[neighbourId] = true; // reproduction
+                }
+            }
+        });
     }
 
     for (size_t i = 0; i < TEX_SIZE; ++i) {
-        PROFILE(*profiler, "neighbour counting logic");
         neighboursLookup[i]->aliveNeighbourCount = 0;
         std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [&i, this](const auto& neighbourPosition) {
             const auto [x, y] = neighbourPosition;
@@ -120,7 +131,6 @@ void Texture::CalculateNextState() const {
 
 void Texture::Render(sf::RenderWindow& window) const {
     for (size_t i = 0; i < TEX_SIZE; ++i){
-        PROFILE(*profiler, "pixel render");
         if (states[i])
             window.draw(*renders[i]);
     }
