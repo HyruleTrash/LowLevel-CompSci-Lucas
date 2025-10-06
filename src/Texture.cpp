@@ -15,8 +15,8 @@
 Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& windowSize, Profiler& profiler) {
     this->profiler = &profiler;
 
-    const auto size = TextureConstants::getSize();
-    const auto sizeX = TextureConstants::getXSize();
+    constexpr auto size = TextureConstants::getSize();
+    constexpr auto sizeX = TextureConstants::getXSize();
 
     neighboursLookup.resize(size);
     std::generate(neighboursLookup.begin(), neighboursLookup.end(), []{
@@ -61,27 +61,25 @@ Texture::Texture(const sf::RectangleShape& pixelTemplate, const sf::Vector2u& wi
         const bool canRight = column != sizeX - 1;
         if (row != 0) { // canTop
             if (canLeft) {
-                neighboursLookup[i]->neighbours.push_back({-1,-1});
-                neighboursLookup[i - sizeX - 1]->neighbours.push_back({1,1});
+                neighboursLookup[i]->neighbours.push_back(i - sizeX - 1);
+                neighboursLookup[i - sizeX - 1]->neighbours.push_back(i);
             }
             if (canRight) {
-                neighboursLookup[i]->neighbours.push_back({1,-1});
-                neighboursLookup[i - sizeX + 1]->neighbours.push_back({-1,1});
+                neighboursLookup[i]->neighbours.push_back(i - sizeX + 1);
+                neighboursLookup[i - sizeX + 1]->neighbours.push_back(i);
             }
-            neighboursLookup[i]->neighbours.push_back({0,-1});
-            neighboursLookup[i - sizeX]->neighbours.push_back({0,1});
+            neighboursLookup[i]->neighbours.push_back(i - sizeX);
+            neighboursLookup[i - sizeX]->neighbours.push_back(i);
         }
         if (canLeft) {
-            neighboursLookup[i]->neighbours.push_back({-1,0});
-            neighboursLookup[i - 1]->neighbours.push_back({1,0});
+            neighboursLookup[i]->neighbours.push_back(i - 1);
+            neighboursLookup[i - 1]->neighbours.push_back(i);
         }
     }
 
     // calculate neighbours
     for (size_t i = 0; i < size; ++i) {
-        std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [&i, this](const auto& neighbourPosition) {
-            const auto [x, y] = neighbourPosition;
-            const auto neighbourId = static_cast<long>(i) + x + y * sizeX;
+        std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [&i, this](const auto& neighbourId) {
             if (states[neighbourId])
                 neighboursLookup[i]->aliveNeighbourCount++;
         });
@@ -96,8 +94,8 @@ void Texture::Update(sf::RenderWindow& window) const {
 void Texture::CalculateNextState() const {
     usedAndUpdated.reset();
 
-    const auto size = TextureConstants::getSize();
-    const auto sizeX = TextureConstants::getXSize();
+    constexpr auto size = TextureConstants::getSize();
+    constexpr auto sizeX = TextureConstants::getXSize();
 
     for (size_t i = 0; i < size; ++i) {
         const int liveNeighbors = neighboursLookup[i]->aliveNeighbourCount;
@@ -108,15 +106,13 @@ void Texture::CalculateNextState() const {
             // underpopulation or overpopulation
             states[i] = false;
         }
-        std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [&i, this](const auto& neighbourPosition) {
-            const auto [x, y] = neighbourPosition;
-            const auto neighbourId = static_cast<long>(i) + x + y * sizeX;
+        std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [this](const size_t& neighbourId) {
             if (!usedAndUpdated[neighbourId]) {
                 if (states[neighbourId] && (neighboursLookup[neighbourId]->aliveNeighbourCount < 2 || neighboursLookup[neighbourId]->aliveNeighbourCount > 3)) {
                     usedAndUpdated[neighbourId] = true;
                     states[neighbourId] = false; // underpopulation or overpopulation
                 }
-                else if (!states[neighbourId] && neighboursLookup[neighbourId]->aliveNeighbourCount == 3){
+                else if (!states[neighbourId] && neighboursLookup[neighbourId]->aliveNeighbourCount == 3){ // crashed here
                     usedAndUpdated[neighbourId] = true;
                     states[neighbourId] = true; // reproduction
                 }
@@ -126,9 +122,7 @@ void Texture::CalculateNextState() const {
 
     for (size_t i = 0; i < size; ++i) {
         neighboursLookup[i]->aliveNeighbourCount = 0;
-        std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [&i, this](const auto& neighbourPosition) {
-            const auto [x, y] = neighbourPosition;
-            const auto neighbourId = static_cast<long>(i) + x + y * sizeX;
+        std::for_each(neighboursLookup[i]->neighbours.begin(), neighboursLookup[i]->neighbours.end(), [&i, this](const auto& neighbourId) {
             if (states[neighbourId])
                 neighboursLookup[i]->aliveNeighbourCount++;
         });
@@ -150,11 +144,8 @@ std::ostream& operator<<(std::ostream& os, const Texture& texture) {
         os << "state = " << texture.states[i] << " " << i << std::endl;
         os << "AliveNeighbourCount = " << texture.neighboursLookup[i]->aliveNeighbourCount << std::endl;
         os << "neighbours [ " << std::endl;
-        std::for_each(texture.neighboursLookup[i]->neighbours.begin(), texture.neighboursLookup[i]->neighbours.end(), [&i, &os, &texture](const auto& neighbourPosition) {
-            const auto [x, y] = neighbourPosition;
-            os << "[" << static_cast<int>(x) << ", " << static_cast<int>(y) << "] = ";
-            const auto neighbourId = static_cast<long>(i) + x + y * TextureConstants::getXSize();
-            os << texture.states[neighbourId] << " " << neighbourId << std::endl;
+        std::for_each(texture.neighboursLookup[i]->neighbours.begin(), texture.neighboursLookup[i]->neighbours.end(), [&i, &os, &texture](const auto& neighbourId) {
+            os << texture.states[neighbourId] << " (" << neighbourId << ")" << std::endl;
         });
         os << "]" << std::endl;
 

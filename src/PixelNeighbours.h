@@ -8,7 +8,7 @@
 
 struct PixelNeighbours {
     int aliveNeighbourCount{0};
-    std::vector<std::tuple<size_t, size_t>> neighbours;
+    std::vector<size_t> neighbours;
 };
 
 
