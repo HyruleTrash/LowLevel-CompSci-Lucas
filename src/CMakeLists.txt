@@ -1,9 +1,12 @@
-add_executable(low-level_setup
+add_executable(collision-crisis
     main.cpp
     Profiler.hpp
+    Ball.h
+    BallSimulation.cpp
+    BallSimulation.h
 )
 
-target_link_libraries(low-level_setup
+target_link_libraries(collision-crisis
  PUBLIC
   ImGui-SFML::ImGui-SFML
 )

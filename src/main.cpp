@@ -5,9 +5,12 @@
 #include <bitset>
 #include <SFML/Graphics.hpp>
 
+#include "Profiler.hpp"
+#include "BallSimulation.h"
+
 int main() {
     sf::RenderWindow window;
-    window.create(sf::VideoMode({ 1280, 720 }), "My test window");
+    window.create(sf::VideoMode({ 1280, 720 }), "Collision crisis", sf::Style::Close);
     window.setFramerateLimit(60);
     window.setVerticalSyncEnabled(true);
 
@@ -15,25 +18,38 @@ int main() {
         return -1;
 
     sf::Clock deltaClock;
+    const auto profiler = std::make_shared<Profiler>();
+    const auto ballSimulation = std::make_unique<BallSimulation>(profiler);
+    const auto windowSize = sf::Vector2u(window.getSize());
 
     while (window.isOpen())
     {
+        PROFILE(*profiler, "Frame call");
         // Event Polling
         while (const std::optional event = window.pollEvent())
         {
             ImGui::SFML::ProcessEvent(window, *event);
 
             // "close requested" event: we close the window
-            if (event->is<sf::Event::Closed>())
+            if (event->is<sf::Event::Closed>()) {
+                profiler->clear();
                 window.close();
+            }
         }
 
         // Update
-        ImGui::SFML::Update(window, deltaClock.restart());
-        ImGui::ShowDemoWindow();
+        auto dt = deltaClock.restart();
+        ImGui::SFML::Update(window, dt);
+        ballSimulation->updateBalls(windowSize, dt.asSeconds());
 
         // Render
         window.clear();
+
+        ballSimulation->drawBalls(window);
+
+        // #ifndef NDEBUG
+        profiler->renderImGui();
+        // #endif
 
         ImGui::SFML::Render(window);
 
