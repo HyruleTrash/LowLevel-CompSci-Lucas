@@ -16,7 +16,7 @@ public:
         shape.setOrigin(sf::Vector2f(radius, radius)); // Center origin
         velocity = sf::Vector2f(vx, vy);
     }
-    std::tuple<int, int> GetPosition() const;
+    std::tuple<float, float> GetPosition() const;
 public:
     sf::CircleShape shape;
     sf::Vector2f velocity;

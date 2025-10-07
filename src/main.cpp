@@ -25,6 +25,8 @@ int main() {
     while (window.isOpen())
     {
         PROFILE(*profiler, "Frame call");
+        auto dt = deltaClock.restart();
+
         // Event Polling
         while (const std::optional event = window.pollEvent())
         {
@@ -35,10 +37,15 @@ int main() {
                 profiler->clear();
                 window.close();
             }
+            // else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+            // {
+            //     if (keyPressed->scancode == sf::Keyboard::Scancode::Enter) {
+            //         ballSimulation->UpdateBalls(windowSize, dt.asSeconds());
+            //     }
+            // }
         }
 
         // Update
-        auto dt = deltaClock.restart();
         ImGui::SFML::Update(window, dt);
         ballSimulation->UpdateBalls(windowSize, dt.asSeconds());
 

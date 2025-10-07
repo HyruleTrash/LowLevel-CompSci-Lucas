@@ -4,6 +4,6 @@
 
 #include "Ball.h"
 
-std::tuple<int, int> Ball::GetPosition() const {
+std::tuple<float, float> Ball::GetPosition() const {
     return {shape.getPosition().x,shape.getPosition().y};
 }

@@ -31,10 +31,12 @@ void BallSimulation::UpdateBalls(const sf::Vector2u &windowSize, float deltaTime
     PROFILE(*profiler, "Ball sim update");
     // Update positions
     for (auto& ball : balls) {
+        spatialHash->Remove(ball);
         ball->shape.move(ball->velocity * deltaTime);
-        ball->hashPosition = spatialHash->Update(ball);
+        ball->hashPosition = spatialHash->Insert(ball);
     }
 
+    // Handle ball-to-ball collisions
     for (size_t i = 0; i < balls.size(); ++i) {
         Ball& ball1 = *balls[i];
         const auto neighbouringBuckets = spatialHash->GetNeighboringBuckets(ball1.hashPosition);
@@ -82,51 +84,6 @@ void BallSimulation::UpdateBalls(const sf::Vector2u &windowSize, float deltaTime
             }
         }
     }
-
-    // Handle ball-to-ball collisions
-    // for (size_t i = 0; i < balls.size(); ++i) {
-    //     for (size_t j = i + 1; j < balls.size(); ++j) {
-    //         Ball& ball1 = *balls[i];
-    //         Ball& ball2 = *balls[j];
-    //
-    //         sf::Vector2f pos1 = ball1.shape.getPosition();
-    //         sf::Vector2f pos2 = ball2.shape.getPosition();
-    //         float radius1 = ball1.shape.getRadius();
-    //         float radius2 = ball2.shape.getRadius();
-    //
-    //         // Calculate distance between centers
-    //         sf::Vector2f delta = pos2 - pos1;
-    //         float distance = std::sqrt(delta.x * delta.x + delta.y * delta.y);
-    //         float minDistance = radius1 + radius2;
-    //
-    //         if (distance < minDistance && distance > 0) {
-    //             // Normalize collision vector
-    //             sf::Vector2f normal = delta / distance;
-    //
-    //             // Separate balls to prevent overlap
-    //             float overlap = minDistance - distance;
-    //             sf::Vector2f separation = normal * (overlap * 0.5f);
-    //             ball1.shape.setPosition(pos1 - separation);
-    //             ball2.shape.setPosition(pos2 + separation);
-    //
-    //             // Calculate relative velocity
-    //             sf::Vector2f relativeVel = ball2.velocity - ball1.velocity;
-    //             float velAlongNormal = relativeVel.x * normal.x + relativeVel.y * normal.y;
-    //
-    //             // Don't resolve if velocities are separating
-    //             if (velAlongNormal > 0) continue;
-    //
-    //             // Apply collision response (elastic collision)
-    //             float restitution = 0.0f; // Bounce factor (0 = no bounce, 1 = perfect bounce)
-    //             float impulse = -(1 + restitution) * velAlongNormal;
-    //
-    //             // Assume equal mass for simplicity
-    //             sf::Vector2f impulseVector = impulse * normal;
-    //             ball1.velocity -= impulseVector;
-    //             ball2.velocity += impulseVector;
-    //         }
-    //     }
-    // }
 
     // Handle wall collisions
     for (auto& ball : balls) {
