@@ -40,7 +40,7 @@ int main() {
         // Update
         auto dt = deltaClock.restart();
         ImGui::SFML::Update(window, dt);
-        ballSimulation->updateBalls(windowSize, dt.asSeconds());
+        ballSimulation->UpdateBalls(windowSize, dt.asSeconds());
 
         // Render
         window.clear();

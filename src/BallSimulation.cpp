@@ -4,7 +4,7 @@
 
 #include "BallSimulation.h"
 
-BallSimulation::BallSimulation(const std::shared_ptr<Profiler>& profiler) : profiler(profiler){
+BallSimulation::BallSimulation(const std::shared_ptr<Profiler>& profiler) : profiler(profiler), spatialHash(std::make_unique<SpatialHash>(&cellSize)){
     gen = std::mt19937(rd());
     posDist = std::uniform_real_distribution<float>(5.0f, 795.0f);
     velDist = std::uniform_real_distribution<float>(-200.0f, 200.0f);
@@ -16,27 +16,30 @@ BallSimulation::BallSimulation(const std::shared_ptr<Profiler>& profiler) : prof
     // Generate random balls
     for (int i = 0; i < 2500; ++i) {
         sf::Color randomColor(colorDist(gen), colorDist(gen), colorDist(gen));
-        balls.emplace_back(
+        // const auto ball =
+        balls.emplace_back(std::make_shared<Ball>(
             posDist(gen), posDist(gen),  // position
             radiusDist(gen),             // radius
             randomColor,                 // color
             velDist(gen), velDist(gen)   // velocity
-        );
+        ));
+        // spatialHash->Insert(ball);
     }
 }
 
-void BallSimulation::updateBalls(const sf::Vector2u &windowSize, float deltaTime) {
+void BallSimulation::UpdateBalls(const sf::Vector2u &windowSize, float deltaTime) const {
     PROFILE(*profiler, "Ball sim update");
     // Update positions
     for (auto& ball : balls) {
-        ball.shape.move(ball.velocity * deltaTime);
+        ball->shape.move(ball->velocity * deltaTime);
+        // spatialHash->Update(ball);
     }
 
     // Handle ball-to-ball collisions
     for (size_t i = 0; i < balls.size(); ++i) {
         for (size_t j = i + 1; j < balls.size(); ++j) {
-            Ball& ball1 = balls[i];
-            Ball& ball2 = balls[j];
+            Ball& ball1 = *balls[i];
+            Ball& ball2 = *balls[j];
 
             sf::Vector2f pos1 = ball1.shape.getPosition();
             sf::Vector2f pos2 = ball2.shape.getPosition();
@@ -79,29 +82,29 @@ void BallSimulation::updateBalls(const sf::Vector2u &windowSize, float deltaTime
 
     // Handle wall collisions
     for (auto& ball : balls) {
-        sf::Vector2f pos = ball.shape.getPosition();
-        float radius = ball.shape.getRadius();
+        sf::Vector2f pos = ball->shape.getPosition();
+        float radius = ball->shape.getRadius();
 
         // Bounce off walls
         if (pos.x - radius <= 0 || pos.x + radius >= windowSize.x) {
-            ball.velocity.x = -ball.velocity.x;
+            ball->velocity.x = -ball->velocity.x;
             // Clamp position to prevent sticking
             if (pos.x - radius <= 0) {
-                ball.shape.setPosition(sf::Vector2f(radius, pos.y));
+                ball->shape.setPosition(sf::Vector2f(radius, pos.y));
             }
             else {
-                ball.shape.setPosition(sf::Vector2f(windowSize.x - radius, pos.y));
+                ball->shape.setPosition(sf::Vector2f(windowSize.x - radius, pos.y));
             }
         }
 
         if (pos.y - radius <= 0 || pos.y + radius >= windowSize.y) {
-            ball.velocity.y = -ball.velocity.y;
+            ball->velocity.y = -ball->velocity.y;
             // Clamp position to prevent sticking
             if (pos.y - radius <= 0) {
-                ball.shape.setPosition(sf::Vector2f(pos.x, radius));
+                ball->shape.setPosition(sf::Vector2f(pos.x, radius));
             }
             else {
-                ball.shape.setPosition(sf::Vector2f(pos.x, windowSize.y - radius));
+                ball->shape.setPosition(sf::Vector2f(pos.x, windowSize.y - radius));
             }
         }
     }
@@ -110,6 +113,6 @@ void BallSimulation::updateBalls(const sf::Vector2u &windowSize, float deltaTime
 void BallSimulation::drawBalls(sf::RenderWindow &window) const {
     PROFILE(*profiler, "Ball sim render");
     for (const auto& ball : balls) {
-        window.draw(ball.shape);
+        window.draw(ball->shape);
     }
 }

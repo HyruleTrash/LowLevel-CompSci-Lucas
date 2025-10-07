@@ -1,9 +1,12 @@
 add_executable(collision-crisis
     main.cpp
     Profiler.hpp
-    Ball.h
+        Ball.h
     BallSimulation.cpp
     BallSimulation.h
+        SpatialHash.cpp
+        SpatialHash.h
+        Ball.cpp
 )
 
 target_link_libraries(collision-crisis
