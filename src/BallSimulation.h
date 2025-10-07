@@ -22,7 +22,7 @@ private:
     std::uniform_real_distribution<float> velDist;
     std::uniform_int_distribution<int> colorDist;
     std::uniform_real_distribution<float> radiusDist;
-    int cellSize{20};
+    int cellSize{64};
     std::unique_ptr<SpatialHash> spatialHash;
     std::vector<std::shared_ptr<Ball>> balls;
 public:

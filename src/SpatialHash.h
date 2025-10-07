@@ -25,10 +25,21 @@ public:
     std::tuple<int, int> Insert(const std::shared_ptr<Ball>& obj);
     std::tuple<int, int> Update(const std::shared_ptr<Ball>& obj);
     void Remove(const std::shared_ptr<Ball>& obj);
-
+    std::array<std::vector<std::shared_ptr<Ball>>*, 8> GetNeighboringBuckets(std::tuple<int, int> hashPosition1);
+private:
     void CheckBucketEmpty(std::tuple<int, int> hashPosition);
 
 private:
+    static constexpr std::array<std::tuple<int, int>, 8> ADJACENT_KEYS = {{
+        {-1, -1},
+        {0, -1},
+        {1, -1},
+        {-1, 0},
+        {1, 0},
+        {-1, 1},
+        {0, 1},
+        {1, 1}
+    }};
     int* cellSize;
     std::unordered_map<std::tuple<int, int>, std::vector<std::shared_ptr<Ball>>, HashPositionToKeyFunction> buckets;
 };

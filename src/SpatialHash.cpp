@@ -38,11 +38,11 @@ std::tuple<int, int> SpatialHash::Update(const std::shared_ptr<Ball>& obj) {
     if (it == oldBucket.end())
         return oldHashPosition;
 
-    const auto newHashPosition = HashFunction(obj->GetPosition());
-    buckets[newHashPosition].push_back(std::move(*it));
-
     oldBucket.erase(it);
     CheckBucketEmpty(oldHashPosition);
+
+    const auto newHashPosition = HashFunction(obj->GetPosition());
+    buckets[newHashPosition].push_back(*it);
 
     return newHashPosition;
 }
@@ -65,4 +65,19 @@ void SpatialHash::CheckBucketEmpty(std::tuple<int, int> hashPosition) {
     if (buckets.find(hashPosition) == buckets.end()) {
         buckets.erase(hashPosition);
     }
+}
+
+/// returns: a array of pointers to neighbouring buckets, buckets that don't exist will be nullptr
+std::array<std::vector<std::shared_ptr<Ball>> *, 8> SpatialHash::GetNeighboringBuckets(std::tuple<int, int> hashPosition1) {
+    std::array<std::vector<std::shared_ptr<Ball>> *, 8> result;
+
+    const auto [hashPosition1X, hashPosition1Y] = hashPosition1;
+    for (size_t i = 0; i < ADJACENT_KEYS.size(); ++i) {
+        const auto [otherKeyX, otherKeyY] = ADJACENT_KEYS[i];
+        const std::tuple<int, int> hashPosition2 = {hashPosition1X + otherKeyX, hashPosition1Y + otherKeyY};
+        if (buckets.find(hashPosition2) != buckets.end()) {
+            result[i] = &buckets[hashPosition2];
+        }
+    }
+    return result;
 }
