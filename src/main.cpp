@@ -21,6 +21,7 @@ int main() {
     const auto profiler = std::make_shared<Profiler>();
     const auto ballSimulation = std::make_unique<BallSimulation>(profiler);
     const auto windowSize = sf::Vector2u(window.getSize());
+    bool paused = false;
 
     while (window.isOpen())
     {
@@ -41,13 +42,26 @@ int main() {
             // {
             //     if (keyPressed->scancode == sf::Keyboard::Scancode::Enter) {
             //         ballSimulation->UpdateBalls(windowSize, dt.asSeconds());
+            //         profiler->AddToFrameCounter();
             //     }
             // }
+            else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+            {
+                if (keyPressed->scancode == sf::Keyboard::Scancode::Enter) {
+                    paused = true;
+                }
+                if (keyPressed->scancode == sf::Keyboard::Scancode::RShift) {
+                    std::cout << *ballSimulation->spatialHash;
+                }
+            }
         }
 
         // Update
         ImGui::SFML::Update(window, dt);
-        ballSimulation->UpdateBalls(windowSize, dt.asSeconds());
+        if (!paused) {
+            ballSimulation->UpdateBalls(windowSize, dt.asSeconds());
+            profiler->AddToFrameCounter();
+        }
 
         // Render
         window.clear();

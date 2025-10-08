@@ -114,13 +114,16 @@ public:
         }
 
         ImGui::End();
-        frameCount++;
     }
 
     void clear() {
         for (auto& profile : profiles) {
             profile.history.clear();
         }
+    }
+
+    void AddToFrameCounter() {
+        ++frameCount;
     }
 };
 

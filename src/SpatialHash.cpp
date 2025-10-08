@@ -22,12 +22,13 @@ std::tuple<int, int> SpatialHash::HashFunction(std::tuple<float, float> position
 /// return: current position in hashmap
 std::tuple<int, int> SpatialHash::Insert(const std::shared_ptr<Ball>& obj) {
     const auto hashPosition = HashFunction(obj->GetPosition());
-    auto [iterator, success] = buckets.emplace(
-        hashPosition,
-        std::vector<std::shared_ptr<Ball>>{}
-    );
-    if (success)
-        buckets[hashPosition].push_back(obj);
+
+    auto it = buckets.find(hashPosition);
+    if (it == buckets.end()) {
+        buckets[hashPosition] = std::vector<std::shared_ptr<Ball>>{};
+    }
+
+    buckets[hashPosition].push_back(obj);
 
     // auto [tempX, tempY] = hashPosition;
     // std::cout << "instance: [" << std::endl << obj->shape.getPosition().x << ", " << obj->shape.getPosition().y << std::endl;
@@ -35,19 +36,6 @@ std::tuple<int, int> SpatialHash::Insert(const std::shared_ptr<Ball>& obj) {
     // std::cout << tempX << ", " << tempY << std::endl << "]" << std::endl;
 
     return hashPosition;
-}
-
-/// return: current position in hashmap
-std::tuple<int, int> SpatialHash::Update(const std::shared_ptr<Ball>& obj) {
-    const auto oldHashPosition = obj->hashPosition;
-    auto& oldBucket = buckets[oldHashPosition];
-
-    if (const auto it = std::find(oldBucket.begin(), oldBucket.end(), obj); it != oldBucket.end()) {
-        oldBucket.erase(it);
-        CheckBucketEmpty(oldHashPosition);
-    }
-
-    return Insert(obj);
 }
 
 /// return: current position in hashmap
@@ -63,14 +51,17 @@ void SpatialHash::Remove(const std::shared_ptr<Ball>& obj) {
 }
 
 void SpatialHash::CheckBucketEmpty(std::tuple<int, int> hashPosition) {
-    if (buckets.find(hashPosition) == buckets.end()) {
+    const auto it = buckets.find(hashPosition);
+    if (it == buckets.end()) {
+        buckets.erase(hashPosition);
+    }else if (it->second.empty()){
         buckets.erase(hashPosition);
     }
 }
 
 /// returns: a array of pointers to neighbouring buckets, buckets that don't exist will be nullptr
-std::array<std::vector<std::shared_ptr<Ball>> *, 8> SpatialHash::GetNeighboringBuckets(std::tuple<int, int> hashPosition1) {
-    std::array<std::vector<std::shared_ptr<Ball>> *, 8> result{};
+std::array<std::vector<std::shared_ptr<Ball>> *, 24> SpatialHash::GetNeighboringBuckets(std::tuple<int, int> hashPosition1) {
+    std::array<std::vector<std::shared_ptr<Ball>> *, 24> result{};
 
     const auto [hashPosition1X, hashPosition1Y] = hashPosition1;
     for (size_t i = 0; i < ADJACENT_KEYS.size(); ++i) {
@@ -81,4 +72,36 @@ std::array<std::vector<std::shared_ptr<Ball>> *, 8> SpatialHash::GetNeighboringB
         }
     }
     return result;
+}
+
+std::ostream& operator<<(std::ostream& os, const SpatialHash& spatialHash) {
+    const auto map = spatialHash.buckets;
+    os << "spatialHash (" << spatialHash.buckets.size() << ") {\n";
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        os << "{\n";
+        const auto [keyX, keyY] = it->first;
+        os << "  key: " << keyX << ", " << keyY << std::endl;
+        const auto bucket = it->second;
+        os << "  bucket: (" << bucket.size() << ") [";
+        if (!bucket.empty()) {
+            os << std::endl;
+            for (auto it2 = bucket.begin(); it2 != bucket.end(); ++it2) {
+                const auto obj = *it2;
+                os << "    objPtr: " << it2->get() << " {" <<std::endl;
+
+                const auto [otherKeyX, otherKeyY] = obj->hashPosition;
+                os << "      savedKey: " << otherKeyX << ", " << otherKeyY << std::endl;
+
+                const auto pos = obj->shape.getPosition();
+                os << "      SFMLPos: " << pos.x << ", " << pos.y << std::endl;
+
+                const auto [calculatedPosX, calculatedPosY] = obj->GetPosition();
+                os << "      Pos: " << calculatedPosX << ", " << calculatedPosY << std::endl << "    }" << std::endl;
+            }
+        }
+        os << "  ]\n";
+        os << "}\n";
+    }
+    os << "}\n";
+    return os;
 }

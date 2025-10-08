@@ -14,7 +14,8 @@
 
 
 class BallSimulation {
-private:
+// private: TODO: make private again
+public:
     std::shared_ptr<Profiler> profiler;
     std::random_device rd;
     std::mt19937 gen;
@@ -22,13 +23,16 @@ private:
     std::uniform_real_distribution<float> velDist;
     std::uniform_int_distribution<int> colorDist;
     std::uniform_real_distribution<float> radiusDist;
-    int cellSize{128};
+    int cellSize{20};
     std::unique_ptr<SpatialHash> spatialHash;
     std::vector<std::shared_ptr<Ball>> balls;
 public:
     BallSimulation(const std::shared_ptr<Profiler>&);
     void UpdateBalls(const sf::Vector2u& windowSize, float deltaTime) const;
-    void drawBalls( sf::RenderWindow& window ) const;
+
+static void HandleCollision(const std::shared_ptr<Ball> &ball1, const std::shared_ptr<Ball> &ball2);
+
+void drawBalls( sf::RenderWindow& window ) const;
 };
 
 
