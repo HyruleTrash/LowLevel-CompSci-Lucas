@@ -3,12 +3,16 @@
 #include "imgui.h"
 #include "imgui-SFML.h"
 #include <bitset>
+#include <condition_variable>
+#include <mutex>
 #include <SFML/Graphics.hpp>
 
 #include <queue>
 #include <thread>
 #include <iostream>
 
+std::mutex mtx;
+std::condition_variable cv;
 int counter = 0;
 bool done = false;
 
@@ -16,6 +20,7 @@ std::queue<int> goods;
 
 void producer() {
     std::cout << "Starting producer..." << std::endl;
+    std::lock_guard<std::mutex> lock(mtx);
 
     for (int i = 0; i < 500; ++i) {
         goods.push(i);
@@ -23,18 +28,20 @@ void producer() {
     }
 
     done = true;
+    cv.notify_all();
 
     std::cout << "Finished producer..." << std::endl;
 }
 
 void consumer() {
     std::cout << "Starting consumer..." << std::endl;
+    std::unique_lock lock(mtx);
 
-    while (!done) {
-        while (!goods.empty()) {
-            goods.pop();
-            counter--;
-        }
+    cv.wait(lock, []{ return done; });
+
+    while (!goods.empty()) {
+        goods.pop();
+        counter--;
     }
 
     std::cout << "Finished consumer..." << std::endl;
