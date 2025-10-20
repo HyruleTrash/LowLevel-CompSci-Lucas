@@ -1,6 +1,10 @@
 add_executable(low-level_setup
     main.cpp
     Profiler.hpp
+        ChatClient.cpp
+        ChatClient.h
+        ChatServer.cpp
+        ChatServer.h
 )
 
 target_link_libraries(low-level_setup

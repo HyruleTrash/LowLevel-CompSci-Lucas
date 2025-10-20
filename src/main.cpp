@@ -42,3 +42,22 @@ int main() {
 
 	return 0;
 }
+
+// int main(int argc, char* argv[]) {
+//     int port = 5555;
+//
+//     if (argc > 1) {
+//         port = std::atoi(argv[1]);
+//     }
+//
+//     try {
+//         ChatServer server(port);
+//         server.run();
+//     }
+//     catch (const std::exception& e) {
+//         std::cerr << "Server error: " << e.what() << std::endl;
+//         return 1;
+//     }
+//
+//     return 0;
+// }

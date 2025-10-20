@@ -30,6 +30,11 @@ FetchContent_Declare(
   GIT_TAG        v3.0
 )
 
+FetchContent_Declare(
+  zmq
+  GIT_REPOSITORY https://github.com/zeromq/libzmq.git
+)
+
 # BUILDING
 
 # SFML
@@ -46,3 +51,4 @@ option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" OFF)
 option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
 
 FetchContent_MakeAvailable(imgui-sfml)
+FetchContent_MakeAvailable(zmq)
