@@ -30,10 +30,37 @@ FetchContent_Declare(
   GIT_TAG        v3.0
 )
 
+#get zmq and dependencies
+set(ENABLE_DRAFTS OFF CACHE BOOL "" FORCE)
+set(WITH_IPC OFF CACHE BOOL "" FORCE)
+set(WITH_NORM OFF CACHE BOOL "" FORCE)
+set(WITH_VMCI OFF CACHE BOOL "" FORCE)
+set(WITH_OPENPGM OFF CACHE BOOL "" FORCE)
+set(WITH_TLS OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
-  zmq
-  GIT_REPOSITORY https://github.com/zeromq/libzmq.git
+        libzmq
+        GIT_REPOSITORY https://github.com/zeromq/libzmq.git
+        GIT_TAG "master"
+#        GIT_TAG v4.3.5
+        OVERRIDE_FIND_PACKAGE
 )
+
+# Configure ZeroMQ build settings
+set(LIBZMQ_BUILD_TESTS         OFF     CACHE BOOL "" FORCE)
+
+# Build ZeroMQ first
+FetchContent_MakeAvailable(libzmq)
+
+FetchContent_Declare(
+        cppzmq
+        GIT_REPOSITORY https://github.com/zeromq/cppzmq.git
+        GIT_TAG v4.11.0
+        OVERRIDE_FIND_PACKAGE
+)
+FetchContent_MakeAvailable(cppzmq)
 
 # BUILDING
 
@@ -51,4 +78,3 @@ option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" OFF)
 option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
 
 FetchContent_MakeAvailable(imgui-sfml)
-FetchContent_MakeAvailable(zmq)
