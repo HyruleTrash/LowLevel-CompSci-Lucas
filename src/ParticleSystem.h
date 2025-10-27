@@ -16,7 +16,7 @@ public:
 
     void spawnParticles(int count, sf::Vector2f origin);
 
-    void update(float deltaTime) const;
+    void update(float deltaTime);
     void render() const;
 
     size_t getParticleCount() const;
@@ -28,13 +28,14 @@ private:
 
     // Particle Container
     std::vector<std::unique_ptr<Particle>> particles;
-    std::shared_ptr<std::vector<sf::CircleShape>> renders;
+public:
+    std::vector<sf::CircleShape> renders;
 
     // Separate vectors per important property
-    std::shared_ptr<std::vector<bool>> aliveFlags;
-    std::shared_ptr<std::vector<sf::Vector2f>> positions;
-    std::shared_ptr<std::vector<sf::Vector2f>> velocities;
-    std::shared_ptr<std::vector<sf::Color>> colors;
+    std::vector<bool> aliveFlags, gravityFlags, collisionFlags;
+    std::vector<double> lifetimes, maxLifetimes;
+    std::vector<sf::Vector2f> positions, lastPositions, velocities, accelerations;
+    std::vector<sf::Color> colors;
 };
 
 
