@@ -6,6 +6,7 @@
 #define PARTICLE_SYSTEM_ASSIGNMENT_PARTICLESYSTEM_H
 #include <memory>
 #include <random>
+#include <stack>
 #include <SFML/Graphics.hpp>
 
 #include "Particle.h"
@@ -32,6 +33,7 @@ public:
     std::vector<sf::CircleShape> renders;
 
     // Separate vectors per important property
+    std::stack<size_t> deadParticlePool;
     std::vector<bool> aliveFlags, gravityFlags, collisionFlags;
     std::vector<double> lifetimes, maxLifetimes;
     std::vector<sf::Vector2f> positions, lastPositions, velocities, accelerations;

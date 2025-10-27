@@ -41,36 +41,52 @@ void ParticleSystem::spawnParticles(const int count, const sf::Vector2f origin) 
         sf::Vector2f velocity(std::cos(angle) * speed, std::sin(angle) * speed);
 
         sf::Color color(colorDist(rng), colorDist(rng), colorDist(rng), 255);
-        float lifetime = lifeDist(rng);
+        const float lifetime = lifeDist(rng);
 
-        // Create particle
-        renders.push_back(sf::CircleShape(2.0f));
+        if (deadParticlePool.empty()) {
+            // Create particle
+            renders.emplace_back(2.0f);
 
-        aliveFlags.push_back(true);
-        collisionFlags.push_back(true);
-        gravityFlags.push_back(true);
+            aliveFlags.push_back(true);
+            collisionFlags.push_back(true);
+            gravityFlags.push_back(true);
 
-        lifetimes.push_back(lifetime);
-        maxLifetimes.push_back(lifetime);
+            lifetimes.push_back(lifetime);
+            maxLifetimes.push_back(lifetime);
 
-        positions.push_back(origin);
-        lastPositions.push_back(origin);
-        accelerations.push_back(sf::Vector2f(0, 98.1f)); // Gravity
-        velocities.push_back(velocity);
+            positions.push_back(origin);
+            lastPositions.push_back(origin);
+            accelerations.emplace_back(0, 98.1f); // Gravity
+            velocities.push_back(velocity);
 
-        colors.push_back(color);
+            colors.push_back(color);
 
-        auto particle = std::make_unique<Particle>(i, this);
+            auto particle = std::make_unique<Particle>(i, this);
 
-        // Store in containers
-        particles.push_back(std::move(particle));
+            // Store in containers
+            particles.push_back(std::move(particle));
+        }
+        else {
+            // reconfigure particle
+            const size_t id = deadParticlePool.top();
+            lifetimes[id] = lifetime;
+            maxLifetimes[id] = lifetime;
+
+            positions[id] = origin;
+            lastPositions[id] = origin;
+            velocities[id] = velocity;
+            colors[id] = color;
+
+            aliveFlags[id] = true;
+            deadParticlePool.pop();
+        }
     }
 }
 
 void ParticleSystem::update(const float deltaTime) {
     for (size_t i = 0; i < renders.size(); ++i) {
         if (aliveFlags.at(i))
-            particles[i]->update(deltaTime, i, this);
+            Particle::update(deltaTime, i, this);
     }
 }
 

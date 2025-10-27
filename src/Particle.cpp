@@ -51,6 +51,7 @@ void Particle::update(const float deltaTime, const size_t id, ParticleSystem* pa
     lifetime -= deltaTime;
     if (lifetime <= 0) {
         particleSystem->aliveFlags.at(id) = false;
+        particleSystem->deadParticlePool.push(id);
     }
 
     // Bounds checking
