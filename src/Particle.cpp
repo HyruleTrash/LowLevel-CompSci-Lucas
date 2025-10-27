@@ -4,61 +4,65 @@
 
 #include "Particle.h"
 
-Particle::Particle(sf::Vector2f pos, sf::Vector2f vel, sf::Color col, float life): isDying(false), position(pos), lifetime(life), velocity(vel),
-    hasGravity(true), color(col), effectType('n'), maxLifetime(life),
-    isVisible(true), mass(1.0f), collisionEnabled(true), radius(2.0f) {
+#include <iostream>
 
-    // Shape
-    shape = new sf::CircleShape(radius);
-    shape->setFillColor(color);
-    shape->setPosition(position);
+#include "ParticleSystem.h"
 
-    // Debug info
-    static int counter = 0;
-    debugName = "Particle_" + std::to_string(counter++);
+Particle::Particle(const std::shared_ptr<std::vector<sf::Vector2f>> &pos,
+    const std::shared_ptr<std::vector<sf::Vector2f>> &vel, const std::shared_ptr<std::vector<sf::Color>> &col, const float life,
+    const std::shared_ptr<std::vector<bool>> &aliveFlag, const std::shared_ptr<std::vector<sf::CircleShape>> &render):
+    renders(render), aliveFlags(aliveFlag), positions(pos), velocities(vel), colors(col), isVisible(true),
+    hasGravity(true), collisionEnabled(true), lifetime(life), maxLifetime(life)
+{
+    static size_t counter = 0; // to calculate the id
 
     // Other data
-    active = true;
     creationTime = std::chrono::duration<double>(
         std::chrono::high_resolution_clock::now().time_since_epoch()
     ).count();
-    id = counter;
-    lastPosition = position;
+    id = counter++;
     lastUpdateTime = creationTime;
+
+    // Shape
+    const auto& position = positions->at(id);
+    renders->at(id).setFillColor(colors->at(id));
+    renders->at(id).setPosition(position);
+
+    lastPosition = position;
     acceleration = sf::Vector2f(0, 98.1f); // Gravity
 }
 
-void Particle::update(float deltaTime) {
-    if (!active) return;
-
+void Particle::update(const float deltaTime) {
     // Timing Update
-    auto now = std::chrono::high_resolution_clock::now();
-    double currentTime = std::chrono::duration<double>(now.time_since_epoch()).count();
+    const auto now = std::chrono::high_resolution_clock::now();
+    const double currentTime = std::chrono::duration<double>(now.time_since_epoch()).count();
     lastUpdateTime = currentTime;
 
     // Store last position
-    lastPosition = position;
+    lastPosition = positions->at(id);
 
     // Physics calculations
+    auto& position = positions->at(id);
+    auto& velocity = velocities->at(id);
     if (hasGravity) {
         velocity += acceleration * deltaTime;
     }
 
-    position += velocity * deltaTime;
+    positions->at(id) += velocity * deltaTime;
 
     // Color calculations
-    float alpha = static_cast<float>(lifetime / maxLifetime);
+    auto& color = colors->at(id);
+    const auto alpha = static_cast<float>(lifetime / maxLifetime);
     color.a = static_cast<uint8_t>(alpha * 255);
 
     // Update shape properties every frame
-    shape->setPosition(position);
-    shape->setFillColor(color);
+    renders->at(id).setFillColor(color);
+    renders->at(id).setPosition(position);
 
     // Lifetime management
     lifetime -= deltaTime;
     if (lifetime <= 0) {
-        isDying = true;
-        active = false;
+        aliveFlags->at(id) = false;
     }
 
     // Bounds checking
@@ -69,14 +73,4 @@ void Particle::update(float deltaTime) {
             position.y = std::max(0.0f, std::min(800.0f, position.y));
         }
     }
-}
-
-void Particle::render(sf::RenderWindow &window) {
-    if (isVisible && active) {
-        window.draw(*shape);
-    }
-}
-
-bool Particle::isAlive() const {
-    return active && !isDying;
 }

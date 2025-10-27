@@ -7,41 +7,37 @@
 #include <random>
 #include <SFML/Graphics.hpp>
 
-#include "GameObject.h"
+class ParticleSystem;
 
-class Particle : public GameObject {
+class Particle {
 public:
-    Particle(sf::Vector2f pos, sf::Vector2f vel, sf::Color col, float life);
-    ~Particle() override = default;
+    Particle(const std::shared_ptr<std::vector<sf::Vector2f>> &pos,
+            const std::shared_ptr<std::vector<sf::Vector2f>> &vel,
+            const std::shared_ptr<std::vector<sf::Color>> &col,
+            float life,
+            const std::shared_ptr<std::vector<bool>> &aliveFlag,
+            const std::shared_ptr<std::vector<sf::CircleShape>> &render);
+    ~Particle() = default;
 
-    void update(float deltaTime) override;
-    void render(sf::RenderWindow& window) override;
-    bool isAlive() const override;
-
-    // TODO: Expensive getter functions called frequently
-    sf::Vector2f getPosition() const { return position; }
-    sf::Vector2f getVelocity() const { return velocity; }
-    std::string getDebugName() const { return debugName; }
-    double getCreationTime() const { return creationTime; }
+    void update(float deltaTime);
 
 private:
-    sf::CircleShape *shape;
-    bool isDying;
+    std::shared_ptr<std::vector<sf::CircleShape>> renders;
+    std::shared_ptr<std::vector<bool>> aliveFlags;
+    std::shared_ptr<std::vector<sf::Vector2f>> positions;
+    std::shared_ptr<std::vector<sf::Vector2f>> velocities;
+    std::shared_ptr<std::vector<sf::Color>> colors;
+
     bool isVisible;
     bool hasGravity;
     bool collisionEnabled;
-    char effectType;
-    float radius;
-    float mass;
+    size_t id; // todo: set this
     double lifetime;
     double maxLifetime;
     double lastUpdateTime;
-    std::string debugName;
-    sf::Vector2f position;
+    double creationTime;
     sf::Vector2f lastPosition;
-    sf::Vector2f velocity;
     sf::Vector2f acceleration;
-    sf::Color color;
 };
 
 #endif //PARTICLE_SYSTEM_ASSIGNMENT_PARTICLE_H
