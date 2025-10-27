@@ -25,23 +25,23 @@ public:
     double getCreationTime() const { return creationTime; }
 
 private:
-    bool isDying;
-    sf::Vector2f position;
-    double lifetime;
-    sf::Vector2f velocity;
-    bool hasGravity;
-    sf::Color color;
-    char effectType;
-    sf::Vector2f acceleration;
-    double maxLifetime;
     sf::CircleShape *shape;
+    bool isDying;
     bool isVisible;
-    float mass;
-    sf::Vector2f lastPosition;
-    std::string debugName;
-    double lastUpdateTime;
+    bool hasGravity;
     bool collisionEnabled;
+    char effectType;
     float radius;
+    float mass;
+    double lifetime;
+    double maxLifetime;
+    double lastUpdateTime;
+    std::string debugName;
+    sf::Vector2f position;
+    sf::Vector2f lastPosition;
+    sf::Vector2f velocity;
+    sf::Vector2f acceleration;
+    sf::Color color;
 };
 
 #endif //PARTICLE_SYSTEM_ASSIGNMENT_PARTICLE_H

@@ -22,17 +22,16 @@ public:
     size_t getParticleCount() const;
 
 private:
+    sf::RenderWindow* window;
+    std::mt19937 rng;
     // Particle Container
     std::vector<std::unique_ptr<GameObject>> particles;
 
     // Separate vectors per property
+    std::vector<bool> aliveFlags;
     std::vector<sf::Vector2f> positions;
     std::vector<sf::Vector2f> velocities;
     std::vector<sf::Color> colors;
-    std::vector<bool> aliveFlags;
-
-    sf::RenderWindow* window;
-    std::mt19937 rng;
 };
 
 

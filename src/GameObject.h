@@ -16,9 +16,9 @@ public:
 
 protected:
     bool active;
-    double creationTime;
     int id;
     float x, y;
+    double creationTime;
 };
 
 
