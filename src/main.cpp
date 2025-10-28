@@ -19,7 +19,7 @@ int main() {
 
     sf::Clock deltaClock;
     const auto profiler = std::make_shared<Profiler>();
-    const auto particleSystem = new ParticleSystem(&window);
+    const auto particleSystem = new ParticleSystem(&window, profiler);
 
     while (window.isOpen())
     {
@@ -34,7 +34,13 @@ int main() {
                 window.close();
             else if (event->is<sf::Event::MouseButtonPressed>())
             {
-                particleSystem->spawnParticles(60000, sf::Vector2f(event->getIf<sf::Event::MouseButtonPressed>()->position));
+                const auto button = event->getIf<sf::Event::MouseButtonPressed>();
+                if (button->button == sf::Mouse::Button::Right)
+                    particleSystem->SpawnParticles(60000, sf::Vector2f(button->position));
+            }else if (event->is<sf::Event::KeyPressed>()) {
+                const auto button = event->getIf<sf::Event::KeyPressed>();
+                if (button->code == sf::Keyboard::Key::Enter)
+                    particleSystem->breaker = true;
             }
         }
 
@@ -44,12 +50,12 @@ int main() {
         ImGui::SFML::Update(window, dt);
         // ImGui::ShowDemoWindow();
 
-        particleSystem->update(dt.asSeconds());
+        particleSystem->Update(dt.asSeconds());
 
         // Render
         window.clear();
 
-        particleSystem->render();
+        particleSystem->Render();
         profiler->renderImGui();
         ImGui::SFML::Render(window);
 

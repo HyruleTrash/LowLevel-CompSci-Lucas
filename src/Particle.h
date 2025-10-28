@@ -11,9 +11,6 @@ class ParticleSystem;
 
 class Particle {
 public:
-    Particle(size_t id, ParticleSystem* particleSystem);
-    ~Particle() = default;
-
     static void update(float deltaTime, size_t id, ParticleSystem* particleSystem);
 };
 

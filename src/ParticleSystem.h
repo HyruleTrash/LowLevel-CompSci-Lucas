@@ -4,39 +4,44 @@
 
 #ifndef PARTICLE_SYSTEM_ASSIGNMENT_PARTICLESYSTEM_H
 #define PARTICLE_SYSTEM_ASSIGNMENT_PARTICLESYSTEM_H
+#include <algorithm>
 #include <memory>
 #include <random>
 #include <stack>
 #include <SFML/Graphics.hpp>
 
 #include "Particle.h"
+#include "Profiler.hpp"
 
 class ParticleSystem {
 public:
-    ParticleSystem(sf::RenderWindow* win);
+    ParticleSystem(sf::RenderWindow* win, const std::shared_ptr<Profiler>& profiler);
 
-    void spawnParticles(int count, sf::Vector2f origin);
+    void SpawnParticles(int count, sf::Vector2f origin);
 
-    void update(float deltaTime);
-    void render() const;
+    static void SwapBool(std::_Bit_reference x, std::_Bit_reference y);
 
-    size_t getParticleCount() const;
-    bool isAlive(size_t index) const;
+    void Update(float deltaTime);
+    void Render() const;
+
+    void CleanDeadParticles();
+    void KillPendingRemovalParticles();
+
+    void RemoveAt(size_t index);
 
 private:
     sf::RenderWindow* window;
+    std::shared_ptr<Profiler> profiler;
     std::mt19937 rng;
-
-    // Particle Container
-    std::vector<std::unique_ptr<Particle>> particles;
 public:
-    std::vector<sf::CircleShape> renders;
-
+    bool breaker{false};
+    std::vector<size_t> deadParticlePool;
+    std::vector<size_t> pendingRemovals;
     // Separate vectors per important property
-    std::stack<size_t> deadParticlePool;
+    std::vector<sf::CircleShape> renders;
     std::vector<bool> aliveFlags, gravityFlags, collisionFlags;
-    std::vector<double> lifetimes, maxLifetimes;
-    std::vector<sf::Vector2f> positions, lastPositions, velocities, accelerations;
+    std::vector<double> lifetimes, maxLifetimes, lastUpdateTimes;
+    std::vector<sf::Vector2f> positions, velocities, accelerations;
     std::vector<sf::Color> colors;
 };
 

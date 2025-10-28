@@ -8,26 +8,16 @@
 
 #include "particleSystem.h"
 
-Particle::Particle(const size_t id, ParticleSystem* particleSystem)
-{
-    const auto& position = particleSystem->positions.at(id);
-    const auto& color = particleSystem->colors.at(id);
-    auto& render = particleSystem->renders.at(id);
-
-    // Shape
-    render.setFillColor(color);
-    render.setPosition(position);
-}
-
 void Particle::update(const float deltaTime, const size_t id, ParticleSystem* particleSystem) {
+    auto& lastUpdateTime = particleSystem->lastUpdateTimes.at(id);
     auto& position = particleSystem->positions.at(id);
-    auto& lastPosition = particleSystem->lastPositions.at(id);
     const auto& acceleration = particleSystem->accelerations.at(id);
     auto& velocity = particleSystem->velocities.at(id);
     auto& lifetime = particleSystem->lifetimes.at(id);
 
-    // Store last position
-    lastPosition = position;
+    // update last update timestamp
+    const auto now = std::chrono::high_resolution_clock::now();
+    lastUpdateTime = std::chrono::duration<double>(now.time_since_epoch()).count();
 
     // Physics calculations
     if (particleSystem->gravityFlags.at(id)) {
@@ -51,7 +41,7 @@ void Particle::update(const float deltaTime, const size_t id, ParticleSystem* pa
     lifetime -= deltaTime;
     if (lifetime <= 0) {
         particleSystem->aliveFlags.at(id) = false;
-        particleSystem->deadParticlePool.push(id);
+        particleSystem->deadParticlePool.push_back(id);
     }
 
     // Bounds checking
