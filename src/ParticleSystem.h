@@ -22,7 +22,7 @@ public:
     static void SwapBool(std::_Bit_reference x, std::_Bit_reference y);
 
     void Update(float deltaTime);
-    void Render() const;
+    void Render();
 
     void CleanDeadParticles();
     void KillPendingRemovalParticles();
@@ -38,7 +38,7 @@ public:
     std::vector<size_t> deadParticlePool;
     std::vector<size_t> pendingRemovals;
     // Separate vectors per important property
-    std::vector<sf::CircleShape> renders;
+    sf::VertexArray renders;
     std::vector<bool> aliveFlags, gravityFlags, collisionFlags;
     std::vector<double> lifetimes, maxLifetimes, lastUpdateTimes;
     std::vector<sf::Vector2f> positions, velocities, accelerations;

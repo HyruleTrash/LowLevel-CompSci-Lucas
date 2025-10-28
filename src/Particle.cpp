@@ -32,16 +32,12 @@ void Particle::update(const float deltaTime, const size_t id, ParticleSystem* pa
     const auto alpha = static_cast<float>(lifetime / maxLifetime);
     color.a = static_cast<uint8_t>(alpha * 255);
 
-    // Update shape properties every frame
-    auto& render = particleSystem->renders.at(id);
-    render.setFillColor(color);
-    render.setPosition(position);
-
     // Lifetime management
     lifetime -= deltaTime;
     if (lifetime <= 0) {
         particleSystem->aliveFlags.at(id) = false;
         particleSystem->deadParticlePool.push_back(id);
+        color.a = 0;
     }
 
     // Bounds checking

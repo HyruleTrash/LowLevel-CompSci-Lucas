@@ -9,7 +9,9 @@
 
 #include "Particle.h"
 
-ParticleSystem::ParticleSystem(sf::RenderWindow *win, const std::shared_ptr<Profiler>& profiler): window(win), profiler(profiler), rng(std::random_device{}()) {}
+ParticleSystem::ParticleSystem(sf::RenderWindow *win, const std::shared_ptr<Profiler>& profiler): window(win), profiler(profiler), rng(std::random_device{}()) {
+    renders = sf::VertexArray(sf::PrimitiveType::Points, 0);
+}
 
 void ParticleSystem::SpawnParticles(const int count, const sf::Vector2f origin) {
     std::uniform_real_distribution<float> angleDist(0, 2 * 3.14159f);
@@ -17,6 +19,8 @@ void ParticleSystem::SpawnParticles(const int count, const sf::Vector2f origin) 
     std::uniform_int_distribution<int> colorDist(0, 255);
     std::uniform_real_distribution<float> lifeDist(1.0f, 5.0f);
 
+    const auto previousRendersCount = renders.getVertexCount();
+    renders.resize(previousRendersCount + count);
     for (size_t i = 0; i < count; ++i) {
         const float angle = angleDist(rng);
         const float speed = speedDist(rng);
@@ -27,9 +31,9 @@ void ParticleSystem::SpawnParticles(const int count, const sf::Vector2f origin) 
 
         if (deadParticlePool.empty()) {
             // Create particle
-            auto& render = renders.emplace_back(2.0f);
-            render.setFillColor(color);
-            render.setPosition(origin);
+            auto& render = renders[previousRendersCount + i];
+            render.color = color;
+            render.position = origin;
 
             aliveFlags.push_back(true);
             collisionFlags.push_back(true);
@@ -81,7 +85,7 @@ void ParticleSystem::Update(const float deltaTime) {
     if (aliveFlags.empty())
         return;
 
-    for (size_t i = 0; i < renders.size(); ++i) {
+    for (size_t i = 0; i < aliveFlags.size(); ++i) {
         PROFILE(*profiler, "Update particles");
         if (aliveFlags.at(i))
             Particle::update(deltaTime, i, this);
@@ -100,7 +104,7 @@ void ParticleSystem::CleanDeadParticles() {
         const size_t id = *it;
 
         // Check if particle still exists and is marked for removal, then check if it has been too long
-        if (id < renders.size() && !aliveFlags[id] && (now - lastUpdateTimes.at(id)) > 10) {
+        if (id < aliveFlags.size() && !aliveFlags[id] && (now - lastUpdateTimes.at(id)) > 10) {
             pendingRemovals.push_back(id);
             it = deadParticlePool.erase(it);
         } else {
@@ -126,7 +130,7 @@ void ParticleSystem::KillPendingRemovalParticles() {
         return;
     pendingRemovals.shrink_to_fit();
 
-    renders.shrink_to_fit();
+    renders.resize(aliveFlags.size());
     aliveFlags.shrink_to_fit();
     gravityFlags.shrink_to_fit();
     collisionFlags.shrink_to_fit();
@@ -143,12 +147,12 @@ void ParticleSystem::KillPendingRemovalParticles() {
 }
 
 void ParticleSystem::RemoveAt(const size_t index) {
-    if (index >= renders.size()) {
+    if (index >= aliveFlags.size()) {
         return;
     }
 
     // Swap element with last element
-    if (const size_t lastIndex = renders.size() - 1; index != lastIndex) {
+    if (const size_t lastIndex = aliveFlags.size() - 1; index != lastIndex) {
         std::swap(renders[index], renders[lastIndex]);
 
         SwapBool(aliveFlags[index], aliveFlags[lastIndex]);
@@ -183,7 +187,7 @@ void ParticleSystem::RemoveAt(const size_t index) {
     }
 
     // Remove last element from all vectors
-    renders.pop_back();
+    renders.resize(renders.getVertexCount() - 1);
     aliveFlags.pop_back();
     gravityFlags.pop_back();
     collisionFlags.pop_back();
@@ -199,10 +203,17 @@ void ParticleSystem::RemoveAt(const size_t index) {
     colors.pop_back();
 }
 
-void ParticleSystem::Render() const {
-    // Render all particles
-    for (size_t i = 0; i < renders.size(); ++i) {
-        if (aliveFlags.at(i))
-            window->draw(renders.at(i));
+void ParticleSystem::Render() {
+    for (size_t i = 0; i < aliveFlags.size(); ++i) {
+        if (!aliveFlags[i])
+            continue;
+
+        auto& render = renders[i];
+        if (render.position != positions[i] || render.color != colors[i]) {
+            render.position = positions[i];
+            render.color = colors[i];
+        }
     }
+
+    window->draw(renders);
 }
