@@ -10,8 +10,8 @@
 
 int main() {
     sf::RenderWindow window;
-    window.create(sf::VideoMode({ 720, 720 }), "My test window");
-    window.setFramerateLimit(60);
+    window.create(sf::VideoMode({ 720, 720 }), "Particle System");
+    // window.setFramerateLimit(60);
     window.setVerticalSyncEnabled(true);
 
     if (!ImGui::SFML::Init(window))
@@ -37,11 +37,12 @@ int main() {
                 const auto button = event->getIf<sf::Event::MouseButtonPressed>();
                 if (button->button == sf::Mouse::Button::Right)
                     particleSystem->SpawnParticles(60000, sf::Vector2f(button->position));
-            }else if (event->is<sf::Event::KeyPressed>()) {
-                const auto button = event->getIf<sf::Event::KeyPressed>();
-                if (button->code == sf::Keyboard::Key::Enter)
-                    particleSystem->breaker = true;
             }
+            // else if (event->is<sf::Event::KeyPressed>()) {
+            //     const auto button = event->getIf<sf::Event::KeyPressed>();
+            //     if (button->code == sf::Keyboard::Key::Enter)
+            //         particleSystem->breaker = true;
+            // }
         }
 
         auto dt = deltaClock.restart();

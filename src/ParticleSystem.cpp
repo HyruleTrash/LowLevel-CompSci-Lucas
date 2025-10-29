@@ -9,6 +9,9 @@
 
 #include "Particle.h"
 
+size_t ParticleSystem::BATCH_SIZE = 1000;
+std::chrono::time_point<std::chrono::system_clock> ParticleSystem::NOW;
+
 ParticleSystem::ParticleSystem(sf::RenderWindow *win, const std::shared_ptr<Profiler>& profiler): window(win), profiler(profiler), rng(std::random_device{}()) {
     renders = sf::VertexArray(sf::PrimitiveType::Points, 0);
 }
@@ -21,6 +24,8 @@ void ParticleSystem::SpawnParticles(const int count, const sf::Vector2f origin) 
 
     const auto previousRendersCount = renders.getVertexCount();
     renders.resize(previousRendersCount + count);
+    ReserveSpaceForNewParticles(count);
+
     for (size_t i = 0; i < count; ++i) {
         const float angle = angleDist(rng);
         const float speed = speedDist(rng);
@@ -30,39 +35,67 @@ void ParticleSystem::SpawnParticles(const int count, const sf::Vector2f origin) 
         const float lifetime = lifeDist(rng);
 
         if (deadParticlePool.empty()) {
-            // Create particle
-            auto& render = renders[previousRendersCount + i];
-            render.color = color;
-            render.position = origin;
-
-            aliveFlags.push_back(true);
-            collisionFlags.push_back(true);
-            gravityFlags.push_back(true);
-
-            lifetimes.push_back(lifetime);
-            maxLifetimes.push_back(lifetime);
-            lastUpdateTimes.push_back(0.0f);
-
-            positions.push_back(origin);
-            accelerations.emplace_back(0, 98.1f); // Gravity
-            velocities.push_back(velocity);
-
-            colors.push_back(color);
+            CreateParticle(lifetime, origin, color, velocity, i, previousRendersCount);
         }
         else {
-            // reconfigure particle
-            const size_t id = deadParticlePool.back();
-            lifetimes[id] = lifetime;
-            maxLifetimes[id] = lifetime;
-
-            positions[id] = origin;
-            velocities[id] = velocity;
-            colors[id] = color;
-
-            aliveFlags[id] = true;
-            deadParticlePool.pop_back();
+            ReUseParticle(lifetime, origin, color, velocity);
         }
     }
+}
+
+void ParticleSystem::ReserveSpaceForNewParticles(const int& count) {
+    const auto nextCount = aliveFlags.size() + count;
+
+    aliveFlags.reserve(nextCount);
+    gravityFlags.reserve(nextCount);
+    collisionFlags.reserve(nextCount);
+
+    lifetimes.reserve(nextCount);
+    maxLifetimes.reserve(nextCount);
+    lastUpdateTimes.reserve(nextCount);
+
+    positions.reserve(nextCount);
+    velocities.reserve(nextCount);
+    accelerations.reserve(nextCount);
+
+    colors.reserve(nextCount);
+}
+
+void ParticleSystem::CreateParticle(const float& lifetime, const sf::Vector2f& origin, const sf::Color& color, const sf::Vector2f& velocity, const size_t& id, const size_t& previousRendersCount) {
+    auto& render = renders[previousRendersCount + id];
+    render.color = color;
+    render.position = origin;
+
+    const auto& aliveFlag = aliveFlags.emplace_back(true);
+    collisionFlags.push_back(true);
+    gravityFlags.push_back(true);
+
+    lifetimes.push_back(lifetime);
+    maxLifetimes.push_back(lifetime);
+    lastUpdateTimes.push_back(0.0f);
+
+    positions.push_back(origin);
+    accelerations.emplace_back(0, 98.1f); // Gravity
+    velocities.push_back(velocity);
+
+    colors.push_back(color);
+    aliveParticleCount++;
+}
+
+/// Used for reconfiguring a existing particle
+void ParticleSystem::ReUseParticle(const float& lifetime, const sf::Vector2f& origin, const sf::Color& color, const sf::Vector2f& velocity) {
+    const size_t id = deadParticlePool.back();
+    lifetimes[id] = lifetime;
+    maxLifetimes[id] = lifetime;
+
+    positions[id] = origin;
+    velocities[id] = velocity;
+    colors[id] = color;
+
+    aliveFlags[id] = true;
+    deadParticlePool.pop_back();
+
+    aliveParticleCount++;
 }
 
 void ParticleSystem::SwapBool(std::_Bit_reference x, std::_Bit_reference y) {
@@ -77,16 +110,13 @@ void ParticleSystem::SwapBool(std::_Bit_reference x, std::_Bit_reference y) {
 }
 
 void ParticleSystem::Update(const float deltaTime) {
-    if (breaker){
-        std::cout << "breaker" << std::endl;
-        return;
-    }
-
     if (aliveFlags.empty())
         return;
 
+    NOW = std::chrono::high_resolution_clock::now();
+
     for (size_t i = 0; i < aliveFlags.size(); ++i) {
-        PROFILE(*profiler, "Update particles");
+        // PROFILE(*profiler, "Update particles");
         if (aliveFlags.at(i))
             Particle::update(deltaTime, i, this);
     }
@@ -96,41 +126,71 @@ void ParticleSystem::Update(const float deltaTime) {
 }
 
 void ParticleSystem::CleanDeadParticles() {
-    PROFILE(*profiler, "CleanDeadParticles");
-    const auto now = std::chrono::duration<double>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    if (deadParticlePool.empty())
+        return;
+
+    const auto now = std::chrono::duration<double>(NOW.time_since_epoch()).count();
+
+    if (deadParticlesPoolSize == deadParticlePool.size() && now - lastUpdateTimes.at(deadParticlePool.back()) < PARTICLE_TIMEOUT)
+        return;
+
+    // PROFILE(*profiler, "CleanDeadParticles");
+
+    const size_t poolOriginalSize = deadParticlePool.size();
+    std::sort(deadParticlePool.begin(), deadParticlePool.end(),
+              [this](const size_t a, const size_t b) {
+                  return lastUpdateTimes.at(a) < lastUpdateTimes.at(b);
+              });
 
     // Remove particles that have been dead for too long
-    for (auto it = deadParticlePool.begin(); it != deadParticlePool.end();) {
-        const size_t id = *it;
-
+    for (auto id = deadParticlePool.back(); !deadParticlePool.empty();) {
         // Check if particle still exists and is marked for removal, then check if it has been too long
-        if (id < aliveFlags.size() && !aliveFlags[id] && (now - lastUpdateTimes.at(id)) > 10) {
+        if (id < aliveFlags.size() && !aliveFlags[id] && (now - lastUpdateTimes.at(id)) > PARTICLE_TIMEOUT) {
             pendingRemovals.push_back(id);
-            it = deadParticlePool.erase(it);
+            deadParticlePool.pop_back();
+            id = deadParticlePool.back();
         } else {
-            ++it;
+            break;
         }
     }
 
-    deadParticlePool.shrink_to_fit();
+    const size_t& poolSize = deadParticlePool.size();
+    deadParticlesPoolSize = poolSize;
+    if (poolOriginalSize != poolSize) {
+        deadParticlePool.shrink_to_fit();
+    }
 }
 
 void ParticleSystem::KillPendingRemovalParticles() {
-    PROFILE(*profiler, "KillPendingRemoval");
-    const size_t BATCH_SIZE = std::min(static_cast<size_t>(100), pendingRemovals.size());
-    for (int i = 0; i < BATCH_SIZE && !pendingRemovals.empty(); ++i) {
+    if (pendingRemovals.empty())
+        return;
+
+    // PROFILE(*profiler, "KillPendingRemoval");
+
+    const size_t size = std::min(BATCH_SIZE, pendingRemovals.size());
+    int counter = 0;
+    for (int i = 0; i < size && !pendingRemovals.empty(); ++i) {
         const size_t id = pendingRemovals.back();
         if (!aliveFlags[id]) {
             RemoveAt(id);
             pendingRemovals.pop_back();
+            counter++;
         }
     }
-
+    if (counter != 0) {
+        if (aliveFlags.size() == 0)
+            renders = sf::VertexArray(sf::PrimitiveType::Points, 0);
+        else
+            renders.resize(aliveFlags.size()); // bandaid shrink to fit
+    }
     if (pendingRemovals.size() != 0)
         return;
+    ShrinkToFit();
+}
+
+void ParticleSystem::ShrinkToFit() {
     pendingRemovals.shrink_to_fit();
 
-    renders.resize(aliveFlags.size());
     aliveFlags.shrink_to_fit();
     gravityFlags.shrink_to_fit();
     collisionFlags.shrink_to_fit();
@@ -150,6 +210,8 @@ void ParticleSystem::RemoveAt(const size_t index) {
     if (index >= aliveFlags.size()) {
         return;
     }
+
+    // PROFILE(*profiler, "removing particle");
 
     // Swap element with last element
     if (const size_t lastIndex = aliveFlags.size() - 1; index != lastIndex) {
@@ -184,10 +246,11 @@ void ParticleSystem::RemoveAt(const size_t index) {
                 idRef = index;
             }
         }
+
+        renders[lastIndex].color = sf::Color::Transparent;
     }
 
     // Remove last element from all vectors
-    renders.resize(renders.getVertexCount() - 1);
     aliveFlags.pop_back();
     gravityFlags.pop_back();
     collisionFlags.pop_back();
@@ -203,17 +266,16 @@ void ParticleSystem::RemoveAt(const size_t index) {
     colors.pop_back();
 }
 
-void ParticleSystem::Render() {
-    for (size_t i = 0; i < aliveFlags.size(); ++i) {
-        if (!aliveFlags[i])
-            continue;
+void ParticleSystem::SetDead(const size_t index) {
+    aliveFlags.at(index) = false;
+    deadParticlePool.push_back(index);
+    renders[index].color = sf::Color::Transparent;
+    aliveParticleCount--;
+}
 
-        auto& render = renders[i];
-        if (render.position != positions[i] || render.color != colors[i]) {
-            render.position = positions[i];
-            render.color = colors[i];
-        }
-    }
-
+void ParticleSystem::Render() const {
+    if (aliveParticleCount == 0)
+        return;
+    // PROFILE(*profiler, "render");
     window->draw(renders);
 }

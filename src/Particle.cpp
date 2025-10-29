@@ -16,8 +16,7 @@ void Particle::update(const float deltaTime, const size_t id, ParticleSystem* pa
     auto& lifetime = particleSystem->lifetimes.at(id);
 
     // update last update timestamp
-    const auto now = std::chrono::high_resolution_clock::now();
-    lastUpdateTime = std::chrono::duration<double>(now.time_since_epoch()).count();
+    lastUpdateTime = std::chrono::duration<double>(ParticleSystem::NOW.time_since_epoch()).count();
 
     // Physics calculations
     if (particleSystem->gravityFlags.at(id)) {
@@ -35,9 +34,8 @@ void Particle::update(const float deltaTime, const size_t id, ParticleSystem* pa
     // Lifetime management
     lifetime -= deltaTime;
     if (lifetime <= 0) {
-        particleSystem->aliveFlags.at(id) = false;
-        particleSystem->deadParticlePool.push_back(id);
-        color.a = 0;
+        particleSystem->SetDead(id);
+        return;
     }
 
     // Bounds checking
@@ -48,4 +46,9 @@ void Particle::update(const float deltaTime, const size_t id, ParticleSystem* pa
             position.y = std::max(0.0f, std::min(800.0f, position.y));
         }
     }
+
+    // update render
+    auto& render = particleSystem->renders[id];
+    render.position = position;
+    render.color = color;
 }
