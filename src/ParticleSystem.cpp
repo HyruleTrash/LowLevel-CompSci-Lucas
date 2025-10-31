@@ -10,10 +10,11 @@
 #include "Particle.h"
 
 size_t ParticleSystem::BATCH_SIZE = 1000;
-std::chrono::time_point<std::chrono::system_clock> ParticleSystem::NOW;
+std::chrono::high_resolution_clock::time_point ParticleSystem::NOW;
+double ParticleSystem::NOW_IN_SECONDS;
 
 ParticleSystem::ParticleSystem(sf::RenderWindow *win, const std::shared_ptr<Profiler>& profiler) : window(win),
-    profiler(profiler), rng(std::random_device{}()),
+    rng(std::random_device{}()), profiler(profiler),
     creationThread(BasicWaitingThread(std::bind(&ParticleSystem::SpawnParticles, this))),
     cleanupThread(BasicWaitingThread(std::bind(&ParticleSystem::CleanParticles, this))),
     renders(sf::PrimitiveType::Points, 0)
@@ -37,8 +38,8 @@ void ParticleSystem::SpawnParticles() {
 
     std::uniform_real_distribution<float> angleDist(0, 2 * 3.14159f);
     std::uniform_real_distribution<float> speedDist(50, 200);
-    std::uniform_int_distribution<int> colorDist(0, 255);
-    std::uniform_real_distribution<float> lifeDist(1.0f, 5.0f);
+    std::uniform_int_distribution colorDist(0, 255);
+    std::uniform_real_distribution lifeDist(1.0f, 5.0f);
 
     particleMutex.lock();
     const auto previousRendersCount = renders.getVertexCount();
@@ -82,12 +83,12 @@ void ParticleSystem::ReserveSpaceForNewParticles(const int& count) {
 }
 
 void ParticleSystem::CreateParticle(const float& lifetime, const sf::Vector2f& origin, const sf::Color& color, const sf::Vector2f& velocity, const size_t& id, const size_t& previousRendersCount) {
-    std::lock_guard<std::mutex> lock(particleMutex);
+    std::lock_guard lock(particleMutex);
     auto& render = renders[previousRendersCount + id];
     render.color = color;
     render.position = origin;
 
-    const auto& aliveFlag = aliveFlags.emplace_back(true);
+    aliveFlags.emplace_back(true);
     collisionFlags.push_back(true);
     gravityFlags.push_back(true);
 
@@ -100,12 +101,12 @@ void ParticleSystem::CreateParticle(const float& lifetime, const sf::Vector2f& o
     velocities.push_back(velocity);
 
     colors.push_back(color);
-    aliveParticleCount++;
+    aliveParticleCount.fetch_add(1);
 }
 
 /// Used for reconfiguring an existing particle
 void ParticleSystem::ReUseParticle(const float& lifetime, const sf::Vector2f& origin, const sf::Color& color, const sf::Vector2f& velocity) {
-    std::lock_guard<std::mutex> lock(particleMutex);
+    std::lock_guard lock(particleMutex);
     const size_t id = deadParticlePool.back();
     lifetimes[id] = lifetime;
     maxLifetimes[id] = lifetime;
@@ -117,7 +118,7 @@ void ParticleSystem::ReUseParticle(const float& lifetime, const sf::Vector2f& or
     aliveFlags[id] = true;
     deadParticlePool.pop_back();
 
-    aliveParticleCount++;
+    aliveParticleCount.fetch_add(1);
 }
 
 void ParticleSystem::SwapBool(std::_Bit_reference x, std::_Bit_reference y) {
@@ -136,8 +137,9 @@ void ParticleSystem::Update(const float deltaTime) {
         return;
 
     NOW = std::chrono::high_resolution_clock::now();
+    NOW_IN_SECONDS = std::chrono::duration<double>(NOW.time_since_epoch()).count();
 
-    if (aliveParticleCount != 0 && updateThreadPool->isIdle()) {
+    if (aliveParticleCount.load() != 0 && updateThreadPool->isIdle()) {
         const auto poolSize = updateThreadPool->GetPoolSize();
         const auto batchSize = aliveFlags.size() / poolSize;
 
@@ -145,39 +147,29 @@ void ParticleSystem::Update(const float deltaTime) {
             const size_t start = i * batchSize;
             const size_t end = std::min(start + batchSize, aliveFlags.size());
 
-            updateThreadPool->enqueue([this, start, end, deltaTime]() {
-                PROFILE(*profiler, "updatePhysics");
-                for (size_t id = start; id < end; ++id) {
-                    std::lock_guard<std::mutex> lock2(particleMutex);
-                    if (aliveFlags.at(id)) {
-                        Particle::UpdatePhysics(deltaTime, id, this);
-                    }
-                }
+            AddToPool(start, end, deltaTime, "updateTimeStamp", [](const float&, const size_t& id, ParticleSystem* particleSystem) {
+                particleSystem->lastUpdateTimes.at(id) = NOW_IN_SECONDS;
             });
-
-            updateThreadPool->enqueue([this, start, end, deltaTime]() {
-                PROFILE(*profiler, "updateColor");
-                for (size_t id = start; id < end; ++id) {
-                    std::lock_guard<std::mutex> lock2(particleMutex);
-                    if (aliveFlags.at(id)) {
-                        Particle::UpdateColor(deltaTime, id, this);
-                    }
-                }
-            });
-
-            updateThreadPool->enqueue([this, start, end, deltaTime]() {
-                PROFILE(*profiler, "updateRender");
-                for (size_t id = start; id < end; ++id) {
-                    std::lock_guard<std::mutex> lock2(particleMutex);
-                    if (aliveFlags.at(id)) {
-                        Particle::UpdateRender(deltaTime, id, this);
-                    }
-                }
-            });
+            AddToPool(start, end, deltaTime, "updatePhysics", Particle::UpdatePhysics); // errors here
+            AddToPool(start, end, deltaTime, "updateColor", Particle::UpdateColor);
+            AddToPool(start, end, deltaTime, "updateRender", Particle::UpdateRender);
         }
     }
 
     cleanupThread.Start();
+}
+
+void ParticleSystem::AddToPool(const size_t& start, const size_t& end, const float& deltaTime, const std::string& processName,
+                              const std::function<void(const float& deltaTime, const size_t& id, ParticleSystem* particleSystem)>& func) {
+    updateThreadPool->enqueue([this, start, end, deltaTime, processName, func = std::move(func)] {
+        PROFILE(*profiler, processName);
+        for (size_t id = start; id < end; ++id) {
+            std::lock_guard lock2(particleMutex);
+            if (aliveFlags.at(id)) {
+                func(deltaTime, id, this);
+            }
+        }
+    });
 }
 
 void ParticleSystem::CleanParticles() {
@@ -186,13 +178,13 @@ void ParticleSystem::CleanParticles() {
 }
 
 void ParticleSystem::CleanDeadParticles() {
-    std::lock_guard<std::mutex> lock(particleMutex);
+    std::lock_guard lock(particleMutex);
     if (deadParticlePool.empty())
         return;
 
     const auto now = std::chrono::duration<double>(NOW.time_since_epoch()).count();
 
-    if (deadParticlesPoolSize == deadParticlePool.size() && now - lastUpdateTimes.at(deadParticlePool.back()) < PARTICLE_TIMEOUT)
+    if (deadParticlesPoolSize.load() == deadParticlePool.size() && now - lastUpdateTimes.at(deadParticlePool.back()) < PARTICLE_TIMEOUT)
         return;
 
     // PROFILE(*profiler, "CleanDeadParticles");
@@ -206,7 +198,7 @@ void ParticleSystem::CleanDeadParticles() {
     // Remove particles that have been dead for too long
     for (auto id = deadParticlePool.back(); !deadParticlePool.empty();) {
         // Check if particle still exists and is marked for removal, then check if it has been too long
-        if (id < aliveFlags.size() && !aliveFlags[id] && (now - lastUpdateTimes.at(id)) > PARTICLE_TIMEOUT) {
+        if (id < aliveFlags.size() && !aliveFlags[id] && now - lastUpdateTimes.at(id) > PARTICLE_TIMEOUT) {
             pendingRemovals.push_back(id);
             deadParticlePool.pop_back();
             id = deadParticlePool.back();
@@ -216,14 +208,14 @@ void ParticleSystem::CleanDeadParticles() {
     }
 
     const size_t& poolSize = deadParticlePool.size();
-    deadParticlesPoolSize = poolSize;
+    deadParticlesPoolSize.store(poolSize);
     if (poolOriginalSize != poolSize) {
         deadParticlePool.shrink_to_fit();
     }
 }
 
 void ParticleSystem::KillPendingRemovalParticles() {
-    std::lock_guard<std::mutex> lock(particleMutex);
+    std::lock_guard lock(particleMutex);
     if (pendingRemovals.empty())
         return;
 
@@ -232,8 +224,7 @@ void ParticleSystem::KillPendingRemovalParticles() {
     const size_t size = std::min(BATCH_SIZE, pendingRemovals.size());
     int counter = 0;
     for (int i = 0; i < size && !pendingRemovals.empty(); ++i) {
-        const size_t id = pendingRemovals.back();
-        if (!aliveFlags[id]) {
+        if (const size_t id = pendingRemovals.back(); !aliveFlags[id]) {
             RemoveAt(id);
             pendingRemovals.pop_back();
             counter++;
@@ -274,7 +265,7 @@ void ParticleSystem::RemoveAt(const size_t index) {
     }
 
     // PROFILE(*profiler, "removing particle");
-    std::lock_guard<std::mutex> lock(particleMutex);
+    std::lock_guard lock(particleMutex);
 
     // Swap element with last element
     if (const size_t lastIndex = aliveFlags.size() - 1; index != lastIndex) {
@@ -333,11 +324,11 @@ void ParticleSystem::SetDead(const size_t index) {
     aliveFlags.at(index) = false;
     deadParticlePool.push_back(index);
     renders[index].color = sf::Color::Transparent;
-    aliveParticleCount--;
+    aliveParticleCount.fetch_sub(1);
 }
 
 void ParticleSystem::Render() const {
-    if (aliveParticleCount == 0)
+    if (aliveParticleCount.load() == 0)
         return;
     // PROFILE(*profiler, "render");
     window->draw(renders);

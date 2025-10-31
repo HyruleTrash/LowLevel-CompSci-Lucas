@@ -20,28 +20,26 @@ public:
     ParticleSystem(sf::RenderWindow* win, const std::shared_ptr<Profiler>& profiler);
 
     void TriggerSpawnParticles(int count, sf::Vector2f origin);
+    void Update(float deltaTime);
+    void Render() const;
+    void SetDead(size_t index);
+    static void SwapBool(std::_Bit_reference x, std::_Bit_reference y);
+private:
     void ReserveSpaceForNewParticles(const int &count);
-
+    void ShrinkToFit();
     void CreateParticle(const float &lifetime, const sf::Vector2f &origin, const sf::Color &color,
                         const sf::Vector2f &velocity, const size_t &id, const size_t &previousRendersCount);
     void ReUseParticle(const float &lifetime, const sf::Vector2f &origin, const sf::Color &color,
                        const sf::Vector2f &velocity);
 
-    static void SwapBool(std::_Bit_reference x, std::_Bit_reference y);
-
-    void Update(float deltaTime);
-
     void CleanParticles();
-
-    void Render() const;
-
     void CleanDeadParticles();
     void KillPendingRemovalParticles();
-
-    void ShrinkToFit();
-
     void RemoveAt(size_t index);
-    void SetDead(size_t index);
+    void AddToPool(const size_t &start, const size_t &end, const float &deltaTime, const std::string &processName,
+                   const std::function<void(const float &deltaTime, const size_t &id, ParticleSystem *particleSystem)> &
+                   func);
+
 public:
     void SpawnParticles();
 
@@ -51,12 +49,14 @@ private:
 public:
     static constexpr int PARTICLE_TIMEOUT{60};
     static size_t BATCH_SIZE;
-    static std::chrono::time_point<std::chrono::system_clock> NOW;
+    static std::chrono::high_resolution_clock::time_point NOW;
+    static double NOW_IN_SECONDS;
+
     std::shared_ptr<Profiler> profiler;
-    int spawnCount;
+    int spawnCount{0};
     sf::Vector2f spawnOrigin;
-    size_t aliveParticleCount{0};
-    size_t deadParticlesPoolSize{0};
+    std::atomic<size_t> aliveParticleCount{0};
+    std::atomic<size_t> deadParticlesPoolSize{0};
     std::mutex particleMutex;
     BasicWaitingThread creationThread;
     BasicWaitingThread cleanupThread;
