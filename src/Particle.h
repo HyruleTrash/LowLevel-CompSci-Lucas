@@ -11,7 +11,9 @@ class ParticleSystem;
 
 class Particle {
 public:
-    static void update(float deltaTime, size_t id, ParticleSystem* particleSystem);
+    static void UpdatePhysics(float deltaTime, size_t id, ParticleSystem* particleSystem);
+    static void UpdateColor(float deltaTime, size_t id, ParticleSystem* particleSystem);
+    static void UpdateRender(float deltaTime, size_t id, ParticleSystem* particleSystem);
 };
 
 #endif //PARTICLE_SYSTEM_ASSIGNMENT_PARTICLE_H

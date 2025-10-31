@@ -18,10 +18,10 @@ ParticleSystem::ParticleSystem(sf::RenderWindow *win, const std::shared_ptr<Prof
     cleanupThread(BasicWaitingThread(std::bind(&ParticleSystem::CleanParticles, this))),
     renders(sf::PrimitiveType::Points, 0)
 {
-    // const int numCores = std::thread::hardware_concurrency();
-    // const auto minThreadCount = std::min(numCores / 5, 1);
+    const int numCores = std::thread::hardware_concurrency();
+    const auto minThreadCount = std::max(numCores - 3, 1);
     // creationThreadPool = std::make_unique<WorkerThreadPool>(minThreadCount);
-    // updateThreadPool = std::make_unique<WorkerThreadPool>(minThreadCount * 3);
+    updateThreadPool = std::make_unique<WorkerThreadPool>(minThreadCount);
     // cleanupThreadPool = std::make_unique<WorkerThreadPool>(minThreadCount);
 }
 
@@ -82,6 +82,7 @@ void ParticleSystem::ReserveSpaceForNewParticles(const int& count) {
 }
 
 void ParticleSystem::CreateParticle(const float& lifetime, const sf::Vector2f& origin, const sf::Color& color, const sf::Vector2f& velocity, const size_t& id, const size_t& previousRendersCount) {
+    std::lock_guard<std::mutex> lock(particleMutex);
     auto& render = renders[previousRendersCount + id];
     render.color = color;
     render.position = origin;
@@ -104,6 +105,7 @@ void ParticleSystem::CreateParticle(const float& lifetime, const sf::Vector2f& o
 
 /// Used for reconfiguring an existing particle
 void ParticleSystem::ReUseParticle(const float& lifetime, const sf::Vector2f& origin, const sf::Color& color, const sf::Vector2f& velocity) {
+    std::lock_guard<std::mutex> lock(particleMutex);
     const size_t id = deadParticlePool.back();
     lifetimes[id] = lifetime;
     maxLifetimes[id] = lifetime;
@@ -135,17 +137,45 @@ void ParticleSystem::Update(const float deltaTime) {
 
     NOW = std::chrono::high_resolution_clock::now();
 
-    try {
-        for (size_t i = 0; i < aliveFlags.size(); ++i) {
-            // PROFILE(*profiler, "Update particles");
-            if (aliveFlags.at(i))
-                Particle::update(deltaTime, i, this);
-        }
-    }catch (std::exception& e) {
-        std::cout << e.what() << std::endl;
-        throw std::runtime_error(e.what());
-    }
+    if (aliveParticleCount != 0 && updateThreadPool->isIdle()) {
+        const auto poolSize = updateThreadPool->GetPoolSize();
+        const auto batchSize = aliveFlags.size() / poolSize;
 
+        for (size_t i = 0; i < poolSize; ++i) {
+            const size_t start = i * batchSize;
+            const size_t end = std::min(start + batchSize, aliveFlags.size());
+
+            updateThreadPool->enqueue([this, start, end, deltaTime]() {
+                PROFILE(*profiler, "updatePhysics");
+                for (size_t id = start; id < end; ++id) {
+                    std::lock_guard<std::mutex> lock2(particleMutex);
+                    if (aliveFlags.at(id)) {
+                        Particle::UpdatePhysics(deltaTime, id, this);
+                    }
+                }
+            });
+
+            updateThreadPool->enqueue([this, start, end, deltaTime]() {
+                PROFILE(*profiler, "updateColor");
+                for (size_t id = start; id < end; ++id) {
+                    std::lock_guard<std::mutex> lock2(particleMutex);
+                    if (aliveFlags.at(id)) {
+                        Particle::UpdateColor(deltaTime, id, this);
+                    }
+                }
+            });
+
+            updateThreadPool->enqueue([this, start, end, deltaTime]() {
+                PROFILE(*profiler, "updateRender");
+                for (size_t id = start; id < end; ++id) {
+                    std::lock_guard<std::mutex> lock2(particleMutex);
+                    if (aliveFlags.at(id)) {
+                        Particle::UpdateRender(deltaTime, id, this);
+                    }
+                }
+            });
+        }
+    }
 
     cleanupThread.Start();
 }
@@ -244,6 +274,7 @@ void ParticleSystem::RemoveAt(const size_t index) {
     }
 
     // PROFILE(*profiler, "removing particle");
+    std::lock_guard<std::mutex> lock(particleMutex);
 
     // Swap element with last element
     if (const size_t lastIndex = aliveFlags.size() - 1; index != lastIndex) {

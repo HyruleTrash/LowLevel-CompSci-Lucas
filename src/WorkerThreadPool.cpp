@@ -47,3 +47,7 @@ int WorkerThreadPool::getQueueSize() const {
     std::unique_lock<std::mutex> lock(const_cast<std::mutex&>(queueMutex));
     return tasks.size();
 }
+
+int WorkerThreadPool::GetPoolSize() const {
+    return workers.size();
+}

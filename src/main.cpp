@@ -23,7 +23,6 @@ int main() {
 
     while (window.isOpen())
     {
-        PROFILE(*profiler, "Frame call");
         // Event Polling
         while (const std::optional event = window.pollEvent())
         {

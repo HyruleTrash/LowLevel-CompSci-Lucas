@@ -26,6 +26,7 @@ public:
 
     bool isIdle() const;
     int getQueueSize() const;
+    int GetPoolSize() const;
 private:
     void threadFunc();
 

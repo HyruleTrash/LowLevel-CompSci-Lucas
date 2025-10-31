@@ -47,12 +47,12 @@ public:
 
 private:
     sf::RenderWindow* window;
-    std::shared_ptr<Profiler> profiler;
     std::mt19937 rng;
 public:
     static constexpr int PARTICLE_TIMEOUT{60};
     static size_t BATCH_SIZE;
     static std::chrono::time_point<std::chrono::system_clock> NOW;
+    std::shared_ptr<Profiler> profiler;
     int spawnCount;
     sf::Vector2f spawnOrigin;
     size_t aliveParticleCount{0};
@@ -62,7 +62,7 @@ public:
     BasicWaitingThread cleanupThread;
     // std::unique_ptr<WorkerThreadPool> creationThreadPool;
     // std::unique_ptr<WorkerThreadPool> cleanupThreadPool;
-    // std::unique_ptr<WorkerThreadPool> updateThreadPool;
+    std::unique_ptr<WorkerThreadPool> updateThreadPool;
     std::vector<size_t> deadParticlePool;
     std::vector<size_t> pendingRemovals;
     // Separate vectors per important property
