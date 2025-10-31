@@ -12,19 +12,39 @@
 size_t ParticleSystem::BATCH_SIZE = 1000;
 std::chrono::time_point<std::chrono::system_clock> ParticleSystem::NOW;
 
-ParticleSystem::ParticleSystem(sf::RenderWindow *win, const std::shared_ptr<Profiler>& profiler): window(win), profiler(profiler), rng(std::random_device{}()) {
-    renders = sf::VertexArray(sf::PrimitiveType::Points, 0);
+ParticleSystem::ParticleSystem(sf::RenderWindow *win, const std::shared_ptr<Profiler>& profiler) : window(win),
+    profiler(profiler), rng(std::random_device{}()),
+    creationThread(BasicWaitingThread(std::bind(&ParticleSystem::SpawnParticles, this))),
+    cleanupThread(BasicWaitingThread(std::bind(&ParticleSystem::CleanParticles, this))),
+    renders(sf::PrimitiveType::Points, 0)
+{
+    // const int numCores = std::thread::hardware_concurrency();
+    // const auto minThreadCount = std::min(numCores / 5, 1);
+    // creationThreadPool = std::make_unique<WorkerThreadPool>(minThreadCount);
+    // updateThreadPool = std::make_unique<WorkerThreadPool>(minThreadCount * 3);
+    // cleanupThreadPool = std::make_unique<WorkerThreadPool>(minThreadCount);
 }
 
-void ParticleSystem::SpawnParticles(const int count, const sf::Vector2f origin) {
+void ParticleSystem::TriggerSpawnParticles(const int count, const sf::Vector2f origin) {
+    spawnCount = count;
+    spawnOrigin = origin;
+    creationThread.Start();
+}
+
+void ParticleSystem::SpawnParticles() {
+    const int count = spawnCount;
+    const sf::Vector2f origin = spawnOrigin;
+
     std::uniform_real_distribution<float> angleDist(0, 2 * 3.14159f);
     std::uniform_real_distribution<float> speedDist(50, 200);
     std::uniform_int_distribution<int> colorDist(0, 255);
     std::uniform_real_distribution<float> lifeDist(1.0f, 5.0f);
 
+    particleMutex.lock();
     const auto previousRendersCount = renders.getVertexCount();
     renders.resize(previousRendersCount + count);
     ReserveSpaceForNewParticles(count);
+    particleMutex.unlock();
 
     for (size_t i = 0; i < count; ++i) {
         const float angle = angleDist(rng);
@@ -82,7 +102,7 @@ void ParticleSystem::CreateParticle(const float& lifetime, const sf::Vector2f& o
     aliveParticleCount++;
 }
 
-/// Used for reconfiguring a existing particle
+/// Used for reconfiguring an existing particle
 void ParticleSystem::ReUseParticle(const float& lifetime, const sf::Vector2f& origin, const sf::Color& color, const sf::Vector2f& velocity) {
     const size_t id = deadParticlePool.back();
     lifetimes[id] = lifetime;
@@ -115,17 +135,28 @@ void ParticleSystem::Update(const float deltaTime) {
 
     NOW = std::chrono::high_resolution_clock::now();
 
-    for (size_t i = 0; i < aliveFlags.size(); ++i) {
-        // PROFILE(*profiler, "Update particles");
-        if (aliveFlags.at(i))
-            Particle::update(deltaTime, i, this);
+    try {
+        for (size_t i = 0; i < aliveFlags.size(); ++i) {
+            // PROFILE(*profiler, "Update particles");
+            if (aliveFlags.at(i))
+                Particle::update(deltaTime, i, this);
+        }
+    }catch (std::exception& e) {
+        std::cout << e.what() << std::endl;
+        throw std::runtime_error(e.what());
     }
 
+
+    cleanupThread.Start();
+}
+
+void ParticleSystem::CleanParticles() {
     CleanDeadParticles();
     KillPendingRemovalParticles();
 }
 
 void ParticleSystem::CleanDeadParticles() {
+    std::lock_guard<std::mutex> lock(particleMutex);
     if (deadParticlePool.empty())
         return;
 
@@ -162,6 +193,7 @@ void ParticleSystem::CleanDeadParticles() {
 }
 
 void ParticleSystem::KillPendingRemovalParticles() {
+    std::lock_guard<std::mutex> lock(particleMutex);
     if (pendingRemovals.empty())
         return;
 

@@ -5,6 +5,10 @@ add_executable(${PROJECT_NAME}
     ParticleSystem.h
     Particle.cpp
     Particle.h
+    WorkerThreadPool.cpp
+    WorkerThreadPool.h
+        BasicWaitingThread.cpp
+        BasicWaitingThread.h
 )
 
 target_link_libraries(${PROJECT_NAME}

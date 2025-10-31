@@ -9,11 +9,15 @@
 #include "particleSystem.h"
 
 void Particle::update(const float deltaTime, const size_t id, ParticleSystem* particleSystem) {
-    auto& lastUpdateTime = particleSystem->lastUpdateTimes.at(id);
-    auto& position = particleSystem->positions.at(id);
-    const auto& acceleration = particleSystem->accelerations.at(id);
-    auto& velocity = particleSystem->velocities.at(id);
-    auto& lifetime = particleSystem->lifetimes.at(id);
+    std::lock_guard<std::mutex> lock(particleSystem->particleMutex);
+    // particleSystem->particleMutex.lock();
+    auto lastUpdateTime = particleSystem->lastUpdateTimes.at(id);
+    auto position = particleSystem->positions.at(id);
+    const auto acceleration = particleSystem->accelerations.at(id);
+    auto velocity = particleSystem->velocities.at(id);
+    auto lifetime = particleSystem->lifetimes.at(id);
+    auto color = particleSystem->colors.at(id);
+    // particleSystem->particleMutex.unlock();
 
     // update last update timestamp
     lastUpdateTime = std::chrono::duration<double>(ParticleSystem::NOW.time_since_epoch()).count();
@@ -26,7 +30,6 @@ void Particle::update(const float deltaTime, const size_t id, ParticleSystem* pa
     position += velocity * deltaTime;
 
     // Color calculations
-    auto& color = particleSystem->colors.at(id);
     const auto& maxLifetime = particleSystem->maxLifetimes.at(id);
     const auto alpha = static_cast<float>(lifetime / maxLifetime);
     color.a = static_cast<uint8_t>(alpha * 255);
@@ -48,7 +51,15 @@ void Particle::update(const float deltaTime, const size_t id, ParticleSystem* pa
     }
 
     // update render
+    // particleSystem->particleMutex.lock();
     auto& render = particleSystem->renders[id];
-    render.position = position;
+    render.position = position; // segmentation error here
     render.color = color;
+
+    particleSystem->lastUpdateTimes.at(id) = lastUpdateTime;
+    particleSystem->positions.at(id) = position;
+    particleSystem->velocities.at(id) = velocity;
+    particleSystem->lifetimes.at(id) = lifetime;
+    particleSystem->colors.at(id) = color;
+    // particleSystem->particleMutex.unlock();
 }

@@ -36,7 +36,7 @@ int main() {
             {
                 const auto button = event->getIf<sf::Event::MouseButtonPressed>();
                 if (button->button == sf::Mouse::Button::Right)
-                    particleSystem->SpawnParticles(60000, sf::Vector2f(button->position));
+                    particleSystem->TriggerSpawnParticles(60000, sf::Vector2f(button->position));
             }
             // else if (event->is<sf::Event::KeyPressed>()) {
             //     const auto button = event->getIf<sf::Event::KeyPressed>();
